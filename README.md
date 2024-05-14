@@ -9,6 +9,8 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 
 <br>
 
+![](https://counter.due.moe/get/@demo)
+
 ![](https://counter.due.moe/get/@demo?theme=urushi)
 
 ## Usage
