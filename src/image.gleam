@@ -1,10 +1,10 @@
 import gleam/int
 
-pub type ImageDimensions {
-  ImageDimensions(width: Int, height: Int)
+pub type ImageInformation {
+  ImageInformation(width: Int, height: Int, extension: String)
 }
 
-pub fn get_image_dimensions(image) {
+pub fn get_image_information(image) {
   case image {
     <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _:bits>> ->
       parse_png_chunks(image, 8)
@@ -20,7 +20,7 @@ pub fn get_image_dimensions(image) {
       height_1:8,
       _rest:bits,
     >> ->
-      Ok(ImageDimensions(
+      Ok(ImageInformation(
         width_0
           |> int.bitwise_or(
           width_1
@@ -31,6 +31,7 @@ pub fn get_image_dimensions(image) {
           height_1
           |> int.bitwise_shift_left(8),
         ),
+        "gif",
       ))
     _ -> Error("Invalid PNG signature")
   }
@@ -47,7 +48,7 @@ fn parse_png_chunks(image, offset) {
       width:32,
       height:32,
       _:bits,
-    >> -> Ok(ImageDimensions(width, height))
+    >> -> Ok(ImageInformation(width, height, "png"))
     <<_:size(offset), length:32, _:4, _:bits>> ->
       parse_png_chunks(image, offset + length + 12)
     _ -> Error("Invalid PNG chunk")

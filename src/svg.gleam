@@ -9,13 +9,13 @@ type XmlImages {
   XmlImages(xml: String, width: Int, height: Int)
 }
 
-fn image(data, dimensions: image.ImageDimensions, width, extension) {
+fn image(data, image: image.ImageInformation, width) {
   "<image
-    height=\"" <> int.to_string(dimensions.height) <> "\"
-    width=\"" <> int.to_string(dimensions.width) <> "\"
+    height=\"" <> int.to_string(image.height) <> "\"
+    width=\"" <> int.to_string(image.width) <> "\"
     x=\"" <> int.to_string(width) <> "\"
     y=\"0\"
-    xlink:href=\"data:image/" <> extension <> ";base64," <> bit_array.base64_encode(
+    xlink:href=\"data:image/" <> image.extension <> ";base64," <> bit_array.base64_encode(
     data,
     False,
   ) <> "\"/>"
@@ -24,12 +24,7 @@ fn image(data, dimensions: image.ImageDimensions, width, extension) {
 fn images(theme, digits, width, height, svgs) {
   case digits {
     [] -> XmlImages(string_builder.to_string(svgs), width, height)
-    [digit, ..rest] -> {
-      let extension = case theme {
-        "asoul" | "gelbooru" | "moebooru" | "rule34" | "urushi" -> "gif"
-        _ -> "png"
-      }
-
+    [digit, ..rest] ->
       case
         simplifile.read_bits(
           from: "./themes/"
@@ -37,28 +32,27 @@ fn images(theme, digits, width, height, svgs) {
           <> "/"
           <> int.to_string(digit)
           <> "."
-          <> extension,
+          <> case theme {
+            "gelbooru-h" | "moebooru-h" -> "png"
+            _ -> "gif"
+          },
         )
       {
         Ok(data) -> {
-          case image.get_image_dimensions(data) {
-            Ok(dimensions) ->
+          case image.get_image_information(data) {
+            Ok(information) ->
               images(
                 theme,
                 rest,
-                width + dimensions.width,
-                int.max(height, dimensions.height),
-                string_builder.append(
-                  svgs,
-                  image(data, dimensions, width, extension),
-                ),
+                width + information.width,
+                int.max(height, information.height),
+                string_builder.append(svgs, image(data, information, width)),
               )
             Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
           }
         }
         Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
       }
-    }
   }
 }
 
