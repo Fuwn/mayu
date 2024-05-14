@@ -7,9 +7,9 @@ pub type Counter {
 }
 
 pub fn setup(connection) {
-  let _ =
+  let assert Ok(_) =
     sqlight.exec(
-      "pragma foreign_keys = on;
+      "pragma foreign_keys = off;
 
       create table if not exists tb_count (
         id integer primary key autoincrement not null unique,
@@ -46,14 +46,14 @@ pub fn add_counter(connection, name) {
 }
 
 pub fn get_counter(connection, name) {
-  let _ =
+  let assert Ok(_) =
     sqlight.query(
       "insert or ignore into tb_count (name) values (?);",
       with: [sqlight.text(name)],
       on: connection,
       expecting: dynamic.optional(dynamic.int),
     )
-  let _ =
+  let assert Ok(_) =
     sqlight.query(
       "update tb_count set num = num + 1, updated_at = ? where name = ?;",
       with: [sqlight.text(birl.to_iso8601(birl.utc_now())), sqlight.text(name)],
