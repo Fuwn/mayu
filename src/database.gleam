@@ -21,9 +21,12 @@ pub fn setup(connection) {
   let add_column = fn(name) {
     let _ =
       sqlight.exec(
-        "alter table tb_count add column "
-          <> name
-          <> " text default current_timestamp;",
+        "alter table tb_count add column " <> name <> " text;",
+        connection,
+      )
+    let _ =
+      sqlight.exec(
+        "update tb_count set " <> name <> " = current_timestamp;",
         connection,
       )
 
