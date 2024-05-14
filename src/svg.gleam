@@ -6,7 +6,7 @@ import image
 import simplifile
 
 type XmlImages {
-  XmlImages(xml: String, width: Int)
+  XmlImages(xml: String, width: Int, height: Int)
 }
 
 fn image(data, dimensions: image.ImageDimensions, width, extension) {
@@ -23,7 +23,7 @@ fn image(data, dimensions: image.ImageDimensions, width, extension) {
 
 fn images(theme, digits, width, height, svgs) {
   case digits {
-    [] -> XmlImages(string_builder.to_string(svgs), width)
+    [] -> XmlImages(string_builder.to_string(svgs), width, height)
     [digit, ..rest] -> {
       let extension = case theme {
         "asoul" | "gelbooru" | "moebooru" | "rule34" | "urushi" -> "gif"
@@ -53,10 +53,10 @@ fn images(theme, digits, width, height, svgs) {
                   image(data, dimensions, width, extension),
                 ),
               )
-            Error(_) -> XmlImages(string_builder.to_string(svgs), width)
+            Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
           }
         }
-        Error(_) -> XmlImages(string_builder.to_string(svgs), width)
+        Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
       }
     }
   }
@@ -82,7 +82,7 @@ pub fn xml(theme, number) {
 
   "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
   <svg
-    height=\"{height}\"
+    height=\"" <> int.to_string(xml.height) <> "\"
     style=\"image-rendering: pixelated;\"
     version=\"1.1\"
     width=\"" <> int.to_string(xml.width) <> "\"
