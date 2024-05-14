@@ -7,6 +7,8 @@ to be lightweight and easy to use.
 
 Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.org) as its database.
 
+<br>
+
 ![](https://counter.due.moe/get/@demo)
 
 ## Usage
