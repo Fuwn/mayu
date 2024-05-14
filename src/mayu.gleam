@@ -11,7 +11,7 @@ pub fn main() {
 
   let _ = simplifile.create_directory("./data")
 
-  use connection <- sqlight.with_connection("./data/mayu.sqlite3")
+  use connection <- sqlight.with_connection("./data/count.db")
 
   database.setup(connection)
 
@@ -22,7 +22,7 @@ pub fn main() {
       secret_key_base,
     )
     |> mist.new
-    |> mist.port(8080)
+    |> mist.port(3000)
     |> mist.start_http
 
   process.sleep_forever()
