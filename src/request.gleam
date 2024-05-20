@@ -2,12 +2,9 @@ import database
 import gleam/json
 import gleam/string_builder
 import svg
-import wisp.{type Response}
+import wisp
 
-fn middleware(
-  request: wisp.Request,
-  handle: fn(wisp.Request) -> wisp.Response,
-) -> wisp.Response {
+fn middleware(request, handle) {
   let request = wisp.method_override(request)
 
   use <- wisp.log_request(request)
@@ -17,7 +14,7 @@ fn middleware(
   handle(request)
 }
 
-pub fn handle(request, connection) -> Response {
+pub fn handle(request, connection) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
