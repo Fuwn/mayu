@@ -21,19 +21,11 @@ pub fn get_image_information(image) {
       _rest:bits,
     >> ->
       Ok(ImageInformation(
-        width_0
-          |> int.bitwise_or(
-          width_1
-          |> int.bitwise_shift_left(8),
-        ),
-        height_0
-          |> int.bitwise_or(
-          height_1
-          |> int.bitwise_shift_left(8),
-        ),
+        int.bitwise_or(width_0, int.bitwise_shift_left(width_1, 8)),
+        int.bitwise_or(height_0, int.bitwise_shift_left(height_1, 8)),
         "gif",
       ))
-    _ -> Error("Invalid PNG signature")
+    _ -> Error("Unsupported image format")
   }
 }
 
