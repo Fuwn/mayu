@@ -38,7 +38,7 @@ fn images(theme, digits, width, height, svgs) {
           },
         )
       {
-        Ok(data) -> {
+        Ok(data) ->
           case image.get_image_information(data) {
             Ok(information) ->
               images(
@@ -50,7 +50,6 @@ fn images(theme, digits, width, height, svgs) {
               )
             Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
           }
-        }
         Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
       }
   }
