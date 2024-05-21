@@ -6,12 +6,9 @@ pub type ImageInformation {
 
 pub fn get_image_information(image) {
   case image {
-    <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, _:bits>> ->
-      parse_png_chunks(image, 8)
+    <<0x89, "PNG\r\n":utf8, 0x1A, 0x0A, _:bits>> -> parse_png_chunks(image, 8)
     <<
-      0x47,
-      0x49,
-      0x46,
+      "GIF":utf8,
       _:16,
       _:unsigned,
       width_0:8,
