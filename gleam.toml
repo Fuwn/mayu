@@ -3,7 +3,7 @@
 
 name = "mayu"
 version = "0.1.4"
-gleam = ">= 1.1.0"
+gleam = ">= 1.2.0"
 description = "Moe-Counter Compatible Website Hit Counter"
 licenses = ["GPL-3.0-only"]
 repository = { type = "github", user = "Fuwn", repo = "mayu" }
