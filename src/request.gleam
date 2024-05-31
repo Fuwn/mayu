@@ -54,6 +54,6 @@ pub fn handle(request, connection) {
         Error(_) -> wisp.unprocessable_entity()
       }
     }
-    _ -> wisp.html_response(string_builder.from_string("Not found"), 404)
+    _ -> wisp.redirect("https://github.com/Fuwn/mayu")
   }
 }
