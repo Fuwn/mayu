@@ -9,9 +9,14 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 
 <br>
 
-![](https://counter.due.moe/get/@demo)
+<img src="https://counter.due.moe/get/@demo" width="50%">
 
-![](https://counter.due.moe/get/@demo?theme=urushi)
+<img src="https://counter.due.moe/get/@demo?theme=urushi" width="50%">
+
+<br>
+
+Don't know Gleam or functional paradigms? Take a look at the [source tree](./src) and see just how
+easy it is to understand! It's all contained in under 300 (294) liberally newline'd lines of code!
 
 ## Usage
 
