@@ -67,7 +67,7 @@ fn sqlite_now() {
 
 pub fn get_counter(connection, name) {
   case name {
-    "demo" -> Counter("demo", 0_123_456_789, "", "")
+    "demo" -> Ok(Counter("demo", 0_123_456_789, "", ""))
     _ -> {
       check_error(
         sqlight.query(
@@ -102,14 +102,14 @@ pub fn get_counter(connection, name) {
         )
       {
         Ok([first_element]) -> {
-          Counter(
+          Ok(Counter(
             first_element.0,
             first_element.1,
             first_element.2,
             first_element.3,
-          )
+          ))
         }
-        _ -> Counter(name, 0, "", "")
+        _ -> Error("Unreachable entity")
       }
     }
   }
