@@ -253,20 +253,39 @@
     <img src="" alt="Mascot" class="mascot" title="Mascot" />
 
     <script>
+      const themeQueryParameter = new URLSearchParams(
+        window.location.search
+      ).get("theme");
+      const defaultConfiguration = {
+        id: new URLSearchParams(window.location.search).get("id") || "demo",
+        theme: themeQueryParameter || "asoul",
+      };
       let inputTimeout;
       const idInput = document.getElementById("idInput");
       const themeSelect = document.getElementById("themeSelect");
       const image = document.getElementById("example");
       const copyCodesInput = document.getElementById("copy-codes");
-      let inputValue = "demo";
-      let themeValue = "asoul";
+      let inputValue = defaultConfiguration.id;
+      let themeValue = defaultConfiguration.theme;
       const setCopyCodes = () => {
         copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
       };
       const set = () => {
-        inputValue = idInput.value || "demo";
-        themeValue = themeSelect.value || "asoul";
+        if (idInput.value === "" || idInput.value === null) {
+          idInput.value = defaultConfiguration.id;
+        } else {
+          inputValue = idInput.value;
+        }
+
+        if (themeQueryParameter) {
+          themeValue = themeQueryParameter;
+          themeSelect.value = themeValue;
+        } else {
+          themeValue = themeSelect.value;
+        }
+
         image.src = `https://counter.due.moe/get/@${inputValue}?theme=${themeValue}`;
+
         setCopyCodes();
       };
       const mascots = [
