@@ -241,11 +241,14 @@
       const copyCodesInput = document.getElementById("copy-codes");
       let inputValue = "demo";
       let themeValue = "asoul";
+      const setCopyCodes = () => {
+        copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
+      };
       const set = () => {
         inputValue = idInput.value || "demo";
         themeValue = themeSelect.value || "asoul";
         image.src = `https://counter.due.moe/get/@${inputValue}?theme=${themeValue}`;
-        copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
+        setCopyCodes();
       };
       const mascots = [
         { name: "Akaza Akari", image: "https://i.imgur.com/efamPLp.png" },
@@ -291,8 +294,7 @@
         { name: "Yuzuki Yukari", image: "https://i.imgur.com/84HOYIc.png" },
       ];
 
-      copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
-
+      set();
       idInput.addEventListener("input", () => {
         clearTimeout(inputTimeout);
 
