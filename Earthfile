@@ -10,6 +10,7 @@ docker:
 
   COPY +build/erlang-shipment/ /mayu/erlang-shipment/
   COPY themes/ /mayu/themes/
+  COPY index.html /mayu/
 
   WORKDIR /mayu/
 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mayu</title>
+  </head>
+
+  <body>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100..900;1,100..900&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+      body {
+        background-color: #0b1622;
+        color: rgb(159, 173, 189);
+        font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen,
+          Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+      }
+
+      main {
+        background-color: #151f2e;
+        padding: 20px 35.4px;
+        border-radius: 4px;
+        display: flex;
+        gap: 80px;
+        max-width: 100%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.1),
+          0 6px 20px -3px rgba(0, 0, 0, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        main {
+          flex-direction: column;
+        }
+      }
+
+      img {
+        display: block;
+        margin: 10px 0;
+        width: 100%;
+        border-radius: 3px;
+      }
+
+      h2 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 15px;
+      }
+
+      input {
+        background-color: rgb(11, 22, 34);
+        color: rgb(159, 173, 189);
+        border-radius: 4px;
+        border: 0;
+        height: 40px;
+        padding: 0 15px;
+        line-height: 40px;
+        display: inline-block;
+        font-size: 0.9rem;
+      }
+
+      input:focus {
+        outline: none;
+      }
+
+      .label {
+        margin-top: -10px;
+        padding-bottom: 0px;
+        font-size: 0.9rem;
+        color: rgb(114, 138, 161);
+        font-weight: normal;
+      }
+
+      pre {
+        font-family: monospace;
+      }
+
+      .copy-codes {
+        background-color: #0f1926;
+        padding: 10px;
+        border-radius: 4px;
+        color: #9fadbd;
+        font-size: 0.9rem;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-width: 100%;
+        margin-top: 40px;
+      }
+
+      a {
+        color: rgb(61, 180, 242);
+        text-decoration: none;
+      }
+
+      p {
+        font-size: 0.9rem;
+        color: #9fadbd;
+        line-height: 1.4;
+      }
+
+      .attribution {
+        position: absolute;
+        bottom: 20px;
+        left: 35.4px;
+      }
+    </style>
+
+    <main>
+      <div>
+        <h2>Username</h2>
+
+        <p class="label">
+          Enter the username you'd like to use as the ID of your counter.
+        </p>
+
+        <input type="text" id="inputField" placeholder="@demo" />
+
+        <p class="attribution">
+          Written by
+          <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
+
+          <br />
+
+          Source code available on
+          <a href="https://github.com/Fuwn/mayu" target="_blank">GitHub</a>
+        </p>
+      </div>
+
+      <div class="counter">
+        <img
+          id="example"
+          src="https://counter.due.moe/get/@demo"
+          alt="Example counter"
+        />
+
+        <pre id="copy-codes" class="copy-codes">hi</pre>
+      </div>
+    </main>
+
+    <script>
+      let inputTimeout;
+      const idInput = document.getElementById("inputField");
+      const image = document.getElementById("example");
+      const copyCodesInput = document.getElementById("copy-codes");
+      let inputValue = "demo";
+
+      copyCodesInput.innerText = `![${inputValue}](https://counter.due.moe/get/@${inputValue})\n\n<img src="https://counter.due.moe/get/@${inputValue}" alt="${inputValue}" />`;
+
+      idInput.addEventListener("input", () => {
+        clearTimeout(inputTimeout);
+
+        inputTimeout = setTimeout(() => {
+          inputValue = idInput.value;
+          image.src = `https://counter.due.moe/get/@${inputValue}`;
+          copyCodesInput.innerText = `![${inputValue}](https://counter.due.moe/get/@${inputValue})\n\n<img src="https://counter.due.moe/get/@${inputValue}" alt="${inputValue}" />`;
+        }, 500);
+      });
+    </script>
+  </body>
+</html>
