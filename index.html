@@ -171,6 +171,7 @@
           margin: 0;
           border-radius: 0;
           z-index: -1;
+          display: none;
         }
       }
     </style>
@@ -230,12 +231,7 @@
       </div>
     </main>
 
-    <img
-      src="https://i.imgur.com/efamPLp.png"
-      alt="Mascot"
-      class="mascot"
-      title="Mascot"
-    />
+    <img src="" alt="Mascot" class="mascot" title="Mascot" />
 
     <script>
       let inputTimeout;
@@ -309,6 +305,7 @@
       document.querySelector(".mascot").src = randomMascot.image;
       document.querySelector(".mascot").alt = randomMascot.name;
       document.querySelector(".mascot").title = randomMascot.name;
+      document.querySelector(".mascot").style.display = "block";
     </script>
   </body>
 </html>
