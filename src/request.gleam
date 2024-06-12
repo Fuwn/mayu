@@ -1,6 +1,7 @@
 import database
 import gleam/json
 import gleam/string_builder
+import simplifile
 import svg
 import wisp
 
@@ -18,6 +19,12 @@ pub fn handle(request, connection) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
+    [] ->
+      case simplifile.read("index.html") {
+        Ok(content) ->
+          wisp.html_response(string_builder.from_string(content), 200)
+        Error(_) -> wisp.not_found()
+      }
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)
     ["get", "@" <> name] -> {
