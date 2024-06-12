@@ -33,12 +33,6 @@
           0 6px 20px -3px rgba(0, 0, 0, 0.2);
       }
 
-      @media (max-width: 768px) {
-        main {
-          flex-direction: column;
-        }
-      }
-
       img {
         display: block;
         margin: 10px 0;
@@ -90,7 +84,7 @@
         white-space: pre-wrap;
         word-wrap: break-word;
         max-width: 100%;
-        margin-top: 40px;
+        margin-top: 30px;
       }
 
       a {
@@ -109,6 +103,30 @@
         bottom: 20px;
         left: 35.4px;
       }
+
+      .attribution-2 {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        main {
+          flex-direction: column;
+          gap: 60px;
+        }
+
+        .attribution-1 {
+          display: none;
+        }
+
+        .attribution-2 {
+          display: block;
+        }
+
+        .attribution {
+          position: unset;
+          margin-top: 40px;
+        }
+      }
     </style>
 
     <main>
@@ -121,7 +139,7 @@
 
         <input type="text" id="inputField" placeholder="@demo" />
 
-        <p class="attribution">
+        <p class="attribution attribution-1">
           Written by
           <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
 
@@ -140,6 +158,16 @@
         />
 
         <pre id="copy-codes" class="copy-codes">hi</pre>
+
+        <p class="attribution attribution-2">
+          Written by
+          <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
+
+          <br />
+
+          Source code available on
+          <a href="https://github.com/Fuwn/mayu" target="_blank">GitHub</a>
+        </p>
       </div>
     </main>
 
