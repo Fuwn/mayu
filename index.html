@@ -131,7 +131,6 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        align-items: center;
       }
 
       @media (max-width: 768px) {
@@ -173,6 +172,14 @@
           z-index: -1;
           display: none;
         }
+      }
+
+      .copy-codes-label {
+        font-size: 0.9rem;
+        color: rgb(114, 138, 161);
+        font-weight: normal;
+        margin-top: 20px;
+        margin-bottom: -10px;
       }
     </style>
 
@@ -217,7 +224,12 @@
           class="example-image"
         />
 
-        <pre id="copy-codes" class="copy-codes">hi</pre>
+        <p class="copy-codes-label">
+          Copy one of the image embed snippets below to paste into your
+          biography
+        </p>
+
+        <pre id="copy-codes" class="copy-codes"></pre>
 
         <p class="attribution attribution-2">
           Created by
