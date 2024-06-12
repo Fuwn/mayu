@@ -33,7 +33,7 @@
           0 6px 20px -3px rgba(0, 0, 0, 0.2);
       }
 
-      img {
+      .example-image {
         display: block;
         margin: 10px 0;
         width: 100%;
@@ -156,6 +156,22 @@
         select {
           margin-bottom: unset;
         }
+
+        .mascot {
+          display: none;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .mascot {
+          position: fixed;
+          bottom: 0;
+          right: 20px;
+          width: 300px;
+          margin: 0;
+          border-radius: 0;
+          z-index: -1;
+        }
       }
     </style>
 
@@ -167,7 +183,7 @@
           Enter the username you'd like to use as the ID of your counter.
         </p>
 
-        <input type="text" id="idInput" placeholder="@demo" />
+        <input type="text" id="idInput" placeholder="demo" />
 
         <p></p>
 
@@ -197,6 +213,7 @@
           id="example"
           src="https://counter.due.moe/get/@demo"
           alt="Example counter"
+          class="example-image"
         />
 
         <pre id="copy-codes" class="copy-codes">hi</pre>
@@ -213,6 +230,13 @@
       </div>
     </main>
 
+    <img
+      src="https://i.imgur.com/efamPLp.png"
+      alt="Mascot"
+      class="mascot"
+      title="Mascot"
+    />
+
     <script>
       let inputTimeout;
       const idInput = document.getElementById("idInput");
@@ -227,6 +251,49 @@
         image.src = `https://counter.due.moe/get/@${inputValue}?theme=${themeValue}`;
         copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
       };
+      const mascots = [
+        { name: "Akaza Akari", image: "https://i.imgur.com/efamPLp.png" },
+        { name: "Akemi Homura", image: "https://i.imgur.com/8v6aSbV.png" },
+        { name: "Akiyama Mio", image: "https://i.imgur.com/fgbEdWe.png" },
+        { name: "Ali Baba", image: "https://i.imgur.com/FWC00jB.png" },
+        { name: "Cirno", image: "https://i.imgur.com/u65u8oN.png" },
+        { name: "Fubuki Atsuya", image: "https://i.imgur.com/97DaEBD.png" },
+        { name: "Gasai Yuno", image: "https://i.imgur.com/BurJnOd.png" },
+        { name: "Hatsune Miku", image: "https://i.imgur.com/HsqOvDJ.png" },
+        { name: "Hirasawa Yui", image: "https://i.imgur.com/ZttwSus.png" },
+        {
+          name: "Hitagi Senjougahara",
+          image: "https://i.imgur.com/ttQDirH.png",
+        },
+        { name: "Horo", image: "https://i.imgur.com/4F6BAMZ.png" },
+        { name: "Kaname Madoka", image: "https://i.imgur.com/TVlagl3.png" },
+        { name: "Kikuchi Makoto", image: "https://i.imgur.com/aXVz09Y.png" },
+        { name: "Kirisame Marisa", image: "https://i.imgur.com/MCvbGgt.png" },
+        { name: "Kisaragi Chihaya", image: "https://i.imgur.com/4Hdd0R8.png" },
+        { name: "Kousaka Kirino", image: "https://i.imgur.com/E0sdnuC.png" },
+        { name: "Kurisu Makise", image: "https://i.imgur.com/pMNliiX.png" },
+        { name: "Kuriyama Mirai", image: "https://i.imgur.com/TwcfQPD.png" },
+        { name: "Kuroko no Basuke", image: "https://i.imgur.com/FNgiG0D.png" },
+        { name: "Mashiro Shiina", image: "https://i.imgur.com/BxJylsO.png" },
+        { name: "Mayoi Hachikuji", image: "https://i.imgur.com/Xgzke7s.png" },
+        { name: "Miyamoto Konatsu", image: "https://i.imgur.com/GhwBI5n.png" },
+        { name: "Nagase Iori", image: "https://i.imgur.com/SRWU4e1.png" },
+        { name: "Nakano Azusa", image: "https://i.imgur.com/pfqZLHo.png" },
+        { name: "Poko Fox", image: "https://i.imgur.com/OF68sMQ.png" },
+        { name: "Remilia Scarlet", image: "https://i.imgur.com/3YSqyiI.png" },
+        { name: "Ruri Gokou", image: "https://i.imgur.com/UtjqvU6.png" },
+        { name: "Saber", image: "https://i.imgur.com/H7GtZ9j.png" },
+        { name: "Shana", image: "https://i.imgur.com/MPD95PX.png" },
+        { name: "Touwa Erio", image: "https://i.imgur.com/AFINQjc.png" },
+        { name: "Yin", image: "https://i.imgur.com/rddrYFR.png" },
+        { name: "Yoko Littner", image: "https://i.imgur.com/bEPA1rz.png" },
+        {
+          name: "Yukinoshita Yukino",
+          image: "https://i.imgur.com/uu6Dh0I.png",
+        },
+        { name: "Yuuki Asuna", image: "https://i.imgur.com/283FX36.png" },
+        { name: "Yuzuki Yukari", image: "https://i.imgur.com/84HOYIc.png" },
+      ];
 
       copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
 
@@ -236,6 +303,12 @@
         inputTimeout = setTimeout(set, 500);
       });
       themeSelect.addEventListener("change", set);
+
+      const randomMascot = mascots[Math.floor(Math.random() * mascots.length)];
+
+      document.querySelector(".mascot").src = randomMascot.image;
+      document.querySelector(".mascot").alt = randomMascot.name;
+      document.querySelector(".mascot").title = randomMascot.name;
     </script>
   </body>
 </html>
