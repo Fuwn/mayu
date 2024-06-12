@@ -46,7 +46,8 @@
         margin-bottom: 15px;
       }
 
-      input {
+      input,
+      select {
         background-color: rgb(11, 22, 34);
         color: rgb(159, 173, 189);
         border-radius: 4px;
@@ -56,6 +57,18 @@
         line-height: 40px;
         display: inline-block;
         font-size: 0.9rem;
+      }
+
+      ::placeholder {
+        color: #9fadbd;
+      }
+
+      select {
+        color: #9fadbd;
+      }
+
+      select:focus {
+        outline: none;
       }
 
       input:focus {
@@ -137,7 +150,19 @@
           Enter the username you'd like to use as the ID of your counter.
         </p>
 
-        <input type="text" id="inputField" placeholder="@demo" />
+        <input type="text" id="idInput" placeholder="@demo" />
+
+        <p></p>
+
+        <select id="themeSelect">
+          <option value="asoul">asoul</option>
+          <option value="gelbooru">gelbooru</option>
+          <option value="gelbooru-h">gelbooru-h</option>
+          <option value="moebooru">moebooru</option>
+          <option value="moebooru-h">moebooru-h</option>
+          <option value="rule34">rule34</option>
+          <option value="urushi">urushi</option>
+        </select>
 
         <p class="attribution attribution-1">
           Written by
@@ -173,22 +198,27 @@
 
     <script>
       let inputTimeout;
-      const idInput = document.getElementById("inputField");
+      const idInput = document.getElementById("idInput");
+      const themeSelect = document.getElementById("themeSelect");
       const image = document.getElementById("example");
       const copyCodesInput = document.getElementById("copy-codes");
       let inputValue = "demo";
+      let themeValue = "asoul";
+      const set = () => {
+        inputValue = idInput.value || "demo";
+        themeValue = themeSelect.value || "asoul";
+        image.src = `https://counter.due.moe/get/@${inputValue}?theme=${themeValue}`;
+        copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
+      };
 
-      copyCodesInput.innerText = `![${inputValue}](https://counter.due.moe/get/@${inputValue})\n\n<img src="https://counter.due.moe/get/@${inputValue}" alt="${inputValue}" />`;
+      copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
 
       idInput.addEventListener("input", () => {
         clearTimeout(inputTimeout);
 
-        inputTimeout = setTimeout(() => {
-          inputValue = idInput.value;
-          image.src = `https://counter.due.moe/get/@${inputValue}`;
-          copyCodesInput.innerText = `![${inputValue}](https://counter.due.moe/get/@${inputValue})\n\n<img src="https://counter.due.moe/get/@${inputValue}" alt="${inputValue}" />`;
-        }, 500);
+        inputTimeout = setTimeout(set, 500);
       });
+      themeSelect.addEventListener("change", set);
     </script>
   </body>
 </html>
