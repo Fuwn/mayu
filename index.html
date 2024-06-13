@@ -271,10 +271,14 @@
         copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
       };
       const set = () => {
-        if (idInput.value === "" || idInput.value === null) {
-          idInput.value = defaultConfiguration.id;
-        } else {
+        if (idInput.value !== "") {
           inputValue = idInput.value;
+        } else {
+          inputValue = defaultConfiguration.id;
+
+          if (inputValue !== null && inputValue !== "demo") {
+            idInput.value = inputValue;
+          }
         }
 
         if (themeQueryParameter) {
