@@ -68,6 +68,7 @@ Mayu additionally adds two database columns: `created_at` and `updated_at`, whic
 - [Moebooru](https://github.com/moebooru/moebooru)
 - [Rule 34](https://rule34.xxx) (NSFW)
 - [Gelbooru](https://gelbooru.com) (NSFW)
+- [Urushi](https://x.com/udon0531/status/1350738347681959936)
 
 ## Licence
 
