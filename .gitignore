@@ -10,3 +10,6 @@ erl_crash.dump
 # SQLite
 *.sqlite3
 *.db
+
+# Nix
+result
