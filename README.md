@@ -38,6 +38,8 @@ E.g., [counter.due.moe/get/@demo?theme=urushi](https://counter.due.moe/get/@demo
 $ git clone git@github.com:Fuwn/mayu.git
 $ cd mayu
 $ gleam run
+$ # or
+$ nix run
 ```
 
 ### Docker
