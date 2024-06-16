@@ -11,6 +11,11 @@ docker:
   COPY +build/erlang-shipment/ /mayu/erlang-shipment/
   COPY themes/ /mayu/themes/
   COPY index.html /mayu/
+  COPY gleam.toml /mayu/
+
+  ENV MAYU_VERSION=$(grep version /mayu/gleam.toml | cut -d '"' -f 2)
+
+  RUN rm /mayu/gleam.toml
 
   WORKDIR /mayu/
 

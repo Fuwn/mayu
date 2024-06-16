@@ -1,5 +1,7 @@
 import database
+import envoy
 import gleam/json
+import gleam/string
 import gleam/string_builder
 import simplifile
 import svg
@@ -22,7 +24,17 @@ pub fn handle(request, connection) {
     [] ->
       case simplifile.read("index.html") {
         Ok(content) ->
-          wisp.html_response(string_builder.from_string(content), 200)
+          wisp.html_response(
+            string_builder.from_string(
+              string.replace(content, "{{ MAYU_VERSION }}", case
+                envoy.get("MAYU_VERSION")
+              {
+                Ok(version) -> "(v" <> version <> ")"
+                Error(_) -> ""
+              }),
+            ),
+            200,
+          )
         Error(_) -> wisp.not_found()
       }
     ["heart-beat"] ->
