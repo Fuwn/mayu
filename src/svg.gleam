@@ -33,7 +33,7 @@ fn images(theme, digits, width, height, svgs) {
           <> int.to_string(digit)
           <> "."
           <> case theme {
-            "gelbooru-h" | "moebooru-h" -> "png"
+            "gelbooru-h" | "moebooru-h" | "lain" -> "png"
             _ -> "gif"
           },
         )
