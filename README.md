@@ -20,7 +20,7 @@ easy it is to understand! It's all contained in under 300 (294) liberally newlin
 
 ## Usage
 
-Mayu currently has seven available themes selectable using the `theme` query parameter of any `get` operation.
+Mayu currently has nine available themes selectable using the `theme` query parameter of any `get` operation.
 
 E.g., [counter.due.moe/get/@demo?theme=urushi](https://counter.due.moe/get/@demo?theme=urushi)
 
@@ -33,6 +33,8 @@ E.g., [counter.due.moe/get/@demo?theme=urushi](https://counter.due.moe/get/@demo
 - `urushi`
 - `lain`
 - `garukura`
+
+Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behavior by changing the `padding` query parameter of any `get` operation.
 
 ### Local
 

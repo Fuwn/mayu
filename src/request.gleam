@@ -1,6 +1,8 @@
 import database
 import envoy
+import gleam/int
 import gleam/json
+import gleam/list
 import gleam/string
 import gleam/string_builder
 import simplifile
@@ -44,13 +46,23 @@ pub fn handle(request, connection) {
         Ok(counter) -> {
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
-          |> wisp.string_body(svg.xml(
-            case wisp.get_query(request) {
-              [#("theme", theme)] -> theme
-              _ -> "asoul"
-            },
-            counter.num,
-          ))
+          |> wisp.string_body(
+            svg.xml(
+              case list.key_find(wisp.get_query(request), "theme") {
+                Ok(theme) -> theme
+                _ -> "asoul"
+              },
+              counter.num,
+              case list.key_find(wisp.get_query(request), "padding") {
+                Ok(padding) ->
+                  case int.parse(padding) {
+                    Ok(n) -> n
+                    Error(_) -> 6
+                  }
+                _ -> 6
+              },
+            ),
+          )
         }
         Error(_) -> wisp.unprocessable_entity()
       }
