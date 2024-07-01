@@ -55,13 +55,13 @@ fn images(theme, digits, width, height, svgs) {
   }
 }
 
-pub fn xml(theme, number) {
+pub fn xml(theme, number, padding) {
   let xml =
     images(
       theme,
       {
         let assert Ok(digits) = int.digits(number, 10)
-        let digits_padding = 5 - list.length(digits)
+        let digits_padding = padding - list.length(digits)
 
         case digits_padding {
           n if n > 0 -> list.concat([list.repeat(0, digits_padding), digits])
