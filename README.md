@@ -30,7 +30,9 @@ E.g., [counter.due.moe/get/@demo?theme=urushi](https://counter.due.moe/get/@demo
 - `moebooru-h` (NSFW)
 - `moebooru`
 - `rule34` (NSFW)
-- `urushi`.
+- `urushi`
+- `lain`
+- `garukura`
 
 ### Local
 
