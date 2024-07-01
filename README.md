@@ -72,6 +72,7 @@ Mayu additionally adds two database columns: `created_at` and `updated_at`, whic
 - [Gelbooru](https://gelbooru.com) (NSFW)
 - [Urushi](https://x.com/udon0531/status/1350738347681959936)
 - [Lain Iwakura](https://x.com/lililjiliijili/status/869722811236929538)
+- [GaruKura](https://www.pixiv.net/artworks/119693017)
 
 ## Licence
 
