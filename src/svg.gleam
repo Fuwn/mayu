@@ -61,7 +61,7 @@ pub fn xml(theme, number) {
       theme,
       {
         let assert Ok(digits) = int.digits(number, 10)
-        let digits_padding = 6 - list.length(digits)
+        let digits_padding = 5 - list.length(digits)
 
         case digits_padding {
           n if n > 0 -> list.concat([list.repeat(0, digits_padding), digits])
