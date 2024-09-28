@@ -9,9 +9,9 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 
 <br>
 
-<img src="https://counter.due.moe/get/@demo" width="50%">
+<img src="https://mayu.due.moe/get/@demo" width="50%">
 
-<img src="https://counter.due.moe/get/@demo?theme=urushi" width="50%">
+<img src="https://mayu.due.moe/get/@demo?theme=urushi" width="50%">
 
 <br>
 
@@ -22,7 +22,7 @@ easy it is to understand! It's all contained in under 300 (294) liberally newlin
 
 Mayu currently has nine available themes selectable using the `theme` query parameter of any `get` operation.
 
-E.g., [counter.due.moe/get/@demo?theme=urushi](https://counter.due.moe/get/@demo?theme=urushi)
+E.g., [mayu.due.moe/get/@demo?theme=urushi](https://mayu.due.moe/get/@demo?theme=urushi)
 
 - `asoul`
 - `gelbooru-h` (NSFW)
