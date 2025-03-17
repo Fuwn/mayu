@@ -51,6 +51,7 @@
           buildInputs = with pkgs; [
             gleam
             rebar3
+	    escript
           ];
         };
       }
