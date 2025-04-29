@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,8 +14,18 @@
       body {
         background-color: #0b1622;
         color: rgb(159, 173, 189);
-        font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen,
-          Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+        font-family:
+          Roboto,
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          Fira Sans,
+          Droid Sans,
+          Helvetica Neue,
+          sans-serif;
       }
 
       main {
@@ -29,7 +39,8 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.1),
+        box-shadow:
+          0 0 8px -2px rgba(0, 0, 0, 0.1),
           0 6px 20px -3px rgba(0, 0, 0, 0.2);
       }
 
@@ -259,7 +270,7 @@
 
     <script>
       const themeQueryParameter = new URLSearchParams(
-        window.location.search
+        window.location.search,
       ).get("theme");
       const defaultConfiguration = {
         id: new URLSearchParams(window.location.search).get("id") || "demo",
