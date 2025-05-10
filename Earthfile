@@ -6,7 +6,7 @@ all:
 docker:
   ARG tag=latest
 
-  FROM ghcr.io/gleam-lang/gleam:v1.2.0-erlang-alpine
+  FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine
 
   COPY +build/erlang-shipment/ /mayu/erlang-shipment/
   COPY themes/ /mayu/themes/
@@ -26,7 +26,7 @@ docker:
   SAVE IMAGE --push fuwn/mayu:${tag}
 
 deps:
-  FROM ghcr.io/gleam-lang/gleam:v1.2.0-erlang-alpine
+  FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine
 
   RUN apk add --no-cache build-base
 
