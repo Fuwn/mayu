@@ -2,7 +2,7 @@
 
 > Moe-Counter Compatible Website Hit Counter
 
-Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Moe-Counter) designed
+Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Moe-Counter), designed
 to be lightweight and easy to use.
 
 Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.org) as its database.
@@ -16,7 +16,7 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 <br>
 
 Don't know Gleam or functional paradigms? Take a look at the [source tree](./src) and see just how
-easy it is to understand! It's all contained in under 300 (273) effective lines of code!
+easy it is to understand! It's all contained under 300 (273) effective lines of code!
 
 ## Usage
 
@@ -34,7 +34,7 @@ E.g., [mayu.due.moe/get/@demo?theme=urushi](https://mayu.due.moe/get/@demo?theme
 - `lain`
 - `garukura`
 
-Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behavior by changing the `padding` query parameter of any `get` operation.
+Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behaviour by changing the `padding` query parameter of any `get` operation.
 
 ### Local
 
@@ -52,7 +52,7 @@ $ nix run
 docker run --volume 'mayu:/mayu/data/' -p '80:3000' --rm fuwn/mayu:latest
 ```
 
-This Docker command uses a named volume, `mayu`, which allows the Mayu's database to persist between container restarts.
+This Docker command uses a named volume, `mayu`, which allows Mayu's database to persist between container restarts.
 
 ### Database
 
@@ -80,4 +80,4 @@ Mayu additionally adds two database columns: `created_at` and `updated_at`, whic
 
 ## Licence
 
-This project is licensed with the [GNU General Public License v3.0](LICENSE).
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
