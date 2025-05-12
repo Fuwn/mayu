@@ -16,7 +16,7 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 <br>
 
 Don't know Gleam or functional paradigms? Take a look at the [source tree](./src) and see just how
-easy it is to understand! It's all contained in under 300 (294) liberally newline'd lines of code!
+easy it is to understand! It's all contained in under 300 (273) effective lines of code!
 
 ## Usage
 
