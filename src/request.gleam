@@ -28,12 +28,14 @@ pub fn handle(request, connection) {
         Ok(content) ->
           wisp.html_response(
             string_builder.from_string(
-              string.replace(content, "{{ MAYU_VERSION }}", case
-                envoy.get("MAYU_VERSION")
-              {
-                Ok(version) -> "(v" <> version <> ")"
-                Error(_) -> ""
-              }),
+              string.replace(
+                content,
+                "{{ MAYU_VERSION }}",
+                case envoy.get("MAYU_VERSION") {
+                  Ok(version) -> "(v" <> version <> ")"
+                  Error(_) -> ""
+                },
+              ),
             ),
             200,
           )
