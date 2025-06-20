@@ -8,7 +8,7 @@ pub fn get_image_information(image) {
       parse_png_chunks(image, 8)
     <<
       "GIF":utf8,
-      _version:unsigned-24,
+      _version:bytes-3,
       width:little-16,
       height:little-16,
       _rest:bits,
