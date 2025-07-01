@@ -1,9 +1,10 @@
+import cache
 import gleam/bit_array
 import gleam/int
 import gleam/list
+import gleam/option.{Some}
 import gleam/string_builder
 import image
-import simplifile
 
 type XmlImages {
   XmlImages(xml: String, width: Int, height: Int)
@@ -21,43 +22,29 @@ fn image(data, image: image.ImageInformation, width) {
   ) <> "\"/>"
 }
 
-fn images(theme, digits, width, height, svgs) {
+fn images(image_cache, theme, digits, width, height, svgs) {
   case digits {
     [] -> XmlImages(string_builder.to_string(svgs), width, height)
     [digit, ..rest] ->
-      case
-        simplifile.read_bits(
-          from: "./themes/"
-          <> theme
-          <> "/"
-          <> int.to_string(digit)
-          <> "."
-          <> case theme {
-            "gelbooru-h" | "moebooru-h" | "lain" | "garukura" -> "png"
-            _ -> "gif"
-          },
-        )
-      {
-        Ok(data) ->
-          case image.get_image_information(data) {
-            Ok(information) ->
-              images(
-                theme,
-                rest,
-                width + information.width,
-                int.max(height, information.height),
-                string_builder.append(svgs, image(data, information, width)),
-              )
-            Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
-          }
-        Error(_) -> XmlImages(string_builder.to_string(svgs), width, height)
+      case cache.get_image(image_cache, theme, digit) {
+        Some(cached) ->
+          images(
+            image_cache,
+            theme,
+            rest,
+            width + cached.info.width,
+            int.max(height, cached.info.height),
+            string_builder.append(svgs, image(cached.data, cached.info, width)),
+          )
+        _ -> images(image_cache, theme, rest, width, height, svgs)
       }
   }
 }
 
-pub fn xml(theme, number, padding) {
+pub fn xml(image_cache, theme, number, padding) {
   let xml =
     images(
+      image_cache,
       theme,
       {
         let assert Ok(digits) = int.digits(number, 10)

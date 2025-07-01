@@ -1,3 +1,4 @@
+import cache
 import database
 import gleam/erlang/process
 import mist
@@ -10,6 +11,7 @@ pub fn main() {
   wisp.configure_logger()
 
   let _ = simplifile.create_directory("./data")
+  let image_cache = cache.load_themes()
 
   use connection <- sqlight.with_connection("./data/count.db")
 
@@ -18,7 +20,7 @@ pub fn main() {
   let secret_key_base = wisp.random_string(64)
   let assert Ok(_) =
     wisp.mist_handler(
-      fn(request) { request.handle(request, connection) },
+      fn(request) { request.handle(request, connection, image_cache) },
       secret_key_base,
     )
     |> mist.new
