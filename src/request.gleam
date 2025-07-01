@@ -19,7 +19,7 @@ fn middleware(request, handle) {
   handle(request)
 }
 
-pub fn handle(request, connection) {
+pub fn handle(request, connection, image_cache) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
@@ -50,6 +50,7 @@ pub fn handle(request, connection) {
           |> wisp.set_header("Content-Type", "image/svg+xml")
           |> wisp.string_body(
             svg.xml(
+              image_cache,
               case list.key_find(wisp.get_query(request), "theme") {
                 Ok(theme) -> theme
                 _ -> "asoul"
