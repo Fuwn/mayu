@@ -1,7 +1,7 @@
 VERSION 0.8
 
-all:
-  BUILD +docker
+docker-all-platforms:
+  BUILD --platform=linux/amd64 --platform=linux/arm64 +docker
 
 docker:
   ARG tag=latest
@@ -44,4 +44,3 @@ build:
     && gleam export erlang-shipment
 
   SAVE ARTIFACT /mayu/build/erlang-shipment/
-
