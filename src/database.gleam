@@ -1,26 +1,16 @@
 import birl
 import gleam/dynamic
-import gleam/io
+import gleam/option
 import gleam/string
 import sqlight
+import wisp
 
 pub type Counter {
   Counter(name: String, num: Int, created_at: String, updated_at: String)
 }
 
-fn check_error(result, message) {
-  case result {
-    Ok(_) -> Nil
-    Error(_) -> {
-      io.print(message)
-
-      Nil
-    }
-  }
-}
-
 pub fn setup(connection) {
-  check_error(
+  let _ =
     sqlight.exec(
       "pragma foreign_keys = off;
 
@@ -30,9 +20,7 @@ pub fn setup(connection) {
         num int not null default (0)
       ) strict;",
       connection,
-    ),
-    "Failed to create table tb_count",
-  )
+    )
 
   let add_column = fn(name) {
     let _ =
@@ -50,15 +38,6 @@ pub fn setup(connection) {
   Nil
 }
 
-pub fn add_counter(connection, name) {
-  sqlight.query(
-    "insert into tb_count (name) values (?);",
-    with: [sqlight.text(name)],
-    on: connection,
-    expecting: dynamic.optional(dynamic.int),
-  )
-}
-
 fn sqlite_now() {
   birl.to_iso8601(birl.utc_now())
   |> string.slice(0, 19)
@@ -67,49 +46,48 @@ fn sqlite_now() {
 
 pub fn get_counter(connection, name) {
   case name {
-    "demo" -> Ok(Counter("demo", 0_123_456_789, "", ""))
+    "demo" -> Ok(Counter("demo", 1_234_567_890, "", ""))
     _ -> {
-      check_error(
-        sqlight.query(
-          "insert or ignore into tb_count (name, created_at) values (?, ?);",
-          with: [sqlight.text(name), sqlight.text(sqlite_now())],
-          on: connection,
-          expecting: dynamic.optional(dynamic.int),
-        ),
-        "Failed to insert or ignore into tb_count",
-      )
-      check_error(
-        sqlight.query(
-          "update tb_count set num = num + 1, updated_at = ? where name = ?;",
-          with: [sqlight.text(sqlite_now()), sqlight.text(name)],
-          on: connection,
-          expecting: dynamic.int,
-        ),
-        "Failed to update tb_count",
-      )
-
       case
         sqlight.query(
-          "select name, num, created_at, updated_at from tb_count where name = ?;",
-          with: [sqlight.text(name)],
+          "INSERT INTO tb_count (name, created_at, updated_at, num)
+          VALUES (?1, ?2, ?2, 1)
+          ON CONFLICT(name) DO UPDATE SET
+            num = tb_count.num + 1,
+            updated_at = excluded.updated_at
+          RETURNING name, num, created_at, updated_at;",
+          with: [sqlight.text(name), sqlight.text(sqlite_now())],
           on: connection,
           expecting: dynamic.tuple4(
             dynamic.string,
             dynamic.int,
-            dynamic.string,
-            dynamic.string,
+            dynamic.optional(dynamic.string),
+            dynamic.optional(dynamic.string),
           ),
         )
       {
-        Ok([first_element]) -> {
+        Ok([row]) ->
           Ok(Counter(
-            first_element.0,
-            first_element.1,
-            first_element.2,
-            first_element.3,
+            row.0,
+            row.1,
+            option.unwrap(row.2, ""),
+            option.unwrap(row.3, ""),
           ))
+        Ok([]) -> {
+          wisp.log_error("Database query returned no rows unexpectedly.")
+
+          Error("Unreachable entity")
         }
-        _ -> Error("Unreachable entity")
+        Ok([_, _, ..]) -> {
+          wisp.log_error("Database query returned multiple rows unexpectedly.")
+
+          Error("Unreachable entity")
+        }
+        Error(_) -> {
+          wisp.log_error("Database query failed.")
+
+          Error("Database operation failed")
+        }
       }
     }
   }
