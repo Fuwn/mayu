@@ -25,13 +25,10 @@ image:
 
   SAVE IMAGE --push fuwn/mayu:${tag}
 
-deps:
+build:
   FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine
 
   RUN apk add --no-cache build-base
-
-build:
-  FROM +deps
 
   WORKDIR /mayu/
 
