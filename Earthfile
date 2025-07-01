@@ -1,9 +1,9 @@
 VERSION 0.8
 
-docker-all-platforms:
-  BUILD --platform=linux/amd64 --platform=linux/arm64 +docker
+image-all-platforms:
+  BUILD --platform=linux/amd64 --platform=linux/arm64 +image
 
-docker:
+image:
   ARG tag=latest
 
   FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine
