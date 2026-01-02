@@ -1,3 +1,4 @@
+import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
@@ -8,7 +9,7 @@ import simplifile
 import wisp
 
 pub type CachedImage {
-  CachedImage(data: BitArray, info: image.ImageInformation)
+  CachedImage(base64: String, info: image.ImageInformation)
 }
 
 pub type ThemeCache =
@@ -49,7 +50,10 @@ pub fn load_themes() {
                     dict.insert(
                       accumulated_digits,
                       digit,
-                      CachedImage(data: image_data, info: info),
+                      CachedImage(
+                        base64: bit_array.base64_encode(image_data, False),
+                        info: info,
+                      ),
                     )
                   Error(_) -> {
                     wisp.log_error(
