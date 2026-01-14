@@ -1,7 +1,5 @@
-import birl
 import gleam/dynamic
 import gleam/option
-import gleam/string
 import sqlight
 import wisp
 
@@ -21,7 +19,6 @@ pub fn setup(connection) {
       ) strict;",
       connection,
     )
-
   let add_column = fn(name) {
     let _ =
       sqlight.exec(
@@ -38,12 +35,6 @@ pub fn setup(connection) {
   Nil
 }
 
-fn sqlite_now() {
-  birl.to_iso8601(birl.utc_now())
-  |> string.slice(0, 19)
-  |> string.replace("T", " ")
-}
-
 pub fn get_counter(connection, name) {
   case name {
     "demo" -> Ok(Counter("demo", 1_234_567_890, "", ""))
@@ -51,12 +42,12 @@ pub fn get_counter(connection, name) {
       case
         sqlight.query(
           "INSERT INTO tb_count (name, created_at, updated_at, num)
-          VALUES (?1, ?2, ?2, 1)
-          ON CONFLICT(name) DO UPDATE SET
-            num = tb_count.num + 1,
-            updated_at = excluded.updated_at
-          RETURNING name, num, created_at, updated_at;",
-          with: [sqlight.text(name), sqlight.text(sqlite_now())],
+           VALUES (?1, datetime('now'), datetime('now'), 1)
+           ON CONFLICT(name) DO UPDATE SET
+             num = tb_count.num + 1,
+             updated_at = datetime('now')
+           RETURNING name, num, created_at, updated_at;",
+          with: [sqlight.text(name)],
           on: connection,
           expecting: dynamic.tuple4(
             dynamic.string,
