@@ -5,7 +5,6 @@ import gleam/json
 import gleam/list
 import gleam/string
 import gleam/string_builder
-import simplifile
 import svg
 import wisp
 
@@ -19,13 +18,14 @@ fn middleware(request, handle) {
   handle(request)
 }
 
-pub fn handle(request, connection, image_cache) {
+pub fn handle(request, connection, image_cache, index_html) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
     [] ->
-      case simplifile.read("index.html") {
-        Ok(content) ->
+      case index_html {
+        "" -> wisp.not_found()
+        content ->
           wisp.html_response(
             string_builder.from_string(
               string.replace(
@@ -39,24 +39,25 @@ pub fn handle(request, connection, image_cache) {
             ),
             200,
           )
-        Error(_) -> wisp.not_found()
       }
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)
     ["get", "@" <> name] -> {
       case database.get_counter(connection, name) {
         Ok(counter) -> {
+          let query = wisp.get_query(request)
+
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
           |> wisp.string_body(
             svg.xml(
               image_cache,
-              case list.key_find(wisp.get_query(request), "theme") {
+              case list.key_find(query, "theme") {
                 Ok(theme) -> theme
                 _ -> "asoul"
               },
               counter.num,
-              case list.key_find(wisp.get_query(request), "padding") {
+              case list.key_find(query, "padding") {
                 Ok(padding) ->
                   case int.parse(padding) {
                     Ok(n) -> n
