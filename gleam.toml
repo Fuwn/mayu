@@ -2,7 +2,7 @@
 # https://gleam.run/writing-gleam/gleam-toml/.
 
 name = "mayu"
-version = "0.1.17"
+version = "0.1.18"
 gleam = ">= 1.2.0"
 description = "Moe-Counter Compatible Website Hit Counter"
 licenses = ["GPL-3.0-only"]
