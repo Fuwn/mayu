@@ -64,18 +64,8 @@ pub fn get_counter(connection, name) {
             option.unwrap(row.2, ""),
             option.unwrap(row.3, ""),
           ))
-        Ok([]) -> {
-          wisp.log_error("Database query returned no rows unexpectedly.")
-
-          Error("Unreachable entity")
-        }
-        Ok([_, _, ..]) -> {
-          wisp.log_error("Database query returned multiple rows unexpectedly.")
-
-          Error("Unreachable entity")
-        }
-        Error(_) -> {
-          wisp.log_error("Database query failed.")
+        _ -> {
+          wisp.log_error("Database query failed or returned unexpected rows.")
 
           Error("Database operation failed")
         }

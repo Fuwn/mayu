@@ -18,14 +18,9 @@ pub fn main() {
     Ok(version) -> "(v" <> version <> ")"
     Error(_) -> ""
   }
-  let index_html = case simplifile.read("index.html") {
-    Ok(content) -> string.replace(content, "{{ MAYU_VERSION }}", version_tag)
-    Error(_) -> {
-      wisp.log_error("Failed to read index.html")
-
-      ""
-    }
-  }
+  let assert Ok(index_html_source) = simplifile.read("index.html")
+  let index_html =
+    string.replace(index_html_source, "{{ MAYU_VERSION }}", version_tag)
 
   use connection <- sqlight.with_connection("./data/count.db")
 
