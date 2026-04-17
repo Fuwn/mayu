@@ -1,9 +1,7 @@
 import database
-import envoy
 import gleam/int
 import gleam/json
 import gleam/list
-import gleam/string
 import gleam/string_builder
 import svg
 import wisp
@@ -25,20 +23,7 @@ pub fn handle(request, connection, image_cache, index_html) {
     [] ->
       case index_html {
         "" -> wisp.not_found()
-        content ->
-          wisp.html_response(
-            string_builder.from_string(
-              string.replace(
-                content,
-                "{{ MAYU_VERSION }}",
-                case envoy.get("MAYU_VERSION") {
-                  Ok(version) -> "(v" <> version <> ")"
-                  Error(_) -> ""
-                },
-              ),
-            ),
-            200,
-          )
+        content -> wisp.html_response(string_builder.from_string(content), 200)
       }
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)

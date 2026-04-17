@@ -1,6 +1,8 @@
 import cache
 import database
+import envoy
 import gleam/erlang/process
+import gleam/string
 import mist
 import request
 import simplifile
@@ -12,8 +14,12 @@ pub fn main() {
 
   let _ = simplifile.create_directory("./data")
   let image_cache = cache.load_themes()
+  let version_tag = case envoy.get("MAYU_VERSION") {
+    Ok(version) -> "(v" <> version <> ")"
+    Error(_) -> ""
+  }
   let index_html = case simplifile.read("index.html") {
-    Ok(content) -> content
+    Ok(content) -> string.replace(content, "{{ MAYU_VERSION }}", version_tag)
     Error(_) -> {
       wisp.log_error("Failed to read index.html")
 

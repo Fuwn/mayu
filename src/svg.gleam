@@ -2,15 +2,15 @@ import cache
 import gleam/int
 import gleam/list
 import gleam/option.{Some}
-import gleam/string_builder
+import gleam/string_builder.{type StringBuilder}
 import image
 
 type XmlImages {
-  XmlImages(xml: String, width: Int, height: Int)
+  XmlImages(xml: StringBuilder, width: Int, height: Int)
 }
 
-fn image(base64, image: image.ImageInformation, width) {
-  string_builder.new()
+fn append_image(svgs, base64, image: image.ImageInformation, width) {
+  svgs
   |> string_builder.append("<image height=\"")
   |> string_builder.append(int.to_string(image.height))
   |> string_builder.append("\" width=\"")
@@ -22,12 +22,11 @@ fn image(base64, image: image.ImageInformation, width) {
   |> string_builder.append(";base64,")
   |> string_builder.append(base64)
   |> string_builder.append("\"/>")
-  |> string_builder.to_string()
 }
 
 fn images(image_cache, theme, digits, width, height, svgs) {
   case digits {
-    [] -> XmlImages(string_builder.to_string(svgs), width, height)
+    [] -> XmlImages(svgs, width, height)
     [digit, ..rest] ->
       case cache.get_image(image_cache, theme, digit) {
         Some(cached) ->
@@ -37,10 +36,7 @@ fn images(image_cache, theme, digits, width, height, svgs) {
             rest,
             width + cached.info.width,
             int.max(height, cached.info.height),
-            string_builder.append(
-              svgs,
-              image(cached.base64, cached.info, width),
-            ),
+            append_image(svgs, cached.base64, cached.info, width),
           )
         _ -> images(image_cache, theme, rest, width, height, svgs)
       }
@@ -78,7 +74,7 @@ pub fn xml(image_cache, theme, number, padding) {
   |> string_builder.append(
     "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
   )
-  |> string_builder.append(xml.xml)
+  |> string_builder.append_builder(xml.xml)
   |> string_builder.append("</g></svg>")
   |> string_builder.to_string()
 }
