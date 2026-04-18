@@ -8,11 +8,9 @@ pub type Counter {
 }
 
 pub fn setup(connection) {
-  let _ =
+  let assert Ok(_) =
     sqlight.exec(
-      "pragma foreign_keys = off;
-
-      create table if not exists tb_count (
+      "create table if not exists tb_count (
         id integer primary key autoincrement not null unique,
         name text not null unique,
         num int not null default (0)

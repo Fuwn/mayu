@@ -45,7 +45,7 @@ pub fn handle(request, connection, image_cache, index_html) {
               case list.key_find(query, "padding") {
                 Ok(padding) ->
                   case int.parse(padding) {
-                    Ok(n) -> n
+                    Ok(n) -> int.clamp(n, min: 0, max: 32)
                     Error(_) -> 6
                   }
                 _ -> 6

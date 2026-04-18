@@ -49,7 +49,7 @@ pub fn xml(image_cache, theme, number, padding) {
       image_cache,
       theme,
       {
-        let assert Ok(digits) = int.digits(number, 10)
+        let assert Ok(digits) = int.digits(int.absolute_value(number), 10)
         let digits_padding = padding - list.length(digits)
 
         case digits_padding {
