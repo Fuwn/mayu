@@ -1,0 +1,25 @@
+.git
+.gitignore
+.github
+.vscode
+.DS_Store
+
+# Gleam
+build
+*.beam
+*.ez
+erl_crash.dump
+
+# Nix
+flake.lock
+flake.nix
+result
+
+# SQLite
+data
+*.sqlite3
+*.db
+
+# Documentation/License
+README.md
+LICENSE
