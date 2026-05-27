@@ -1,4 +1,5 @@
 import gleam/dynamic
+import gleam/list
 import gleam/option
 import sqlight
 import wisp
@@ -17,20 +18,38 @@ pub fn setup(connection) {
       ) strict;",
       connection,
     )
-  let add_column = fn(name) {
-    let _ =
-      sqlight.exec(
-        "alter table tb_count add column " <> name <> " text;",
-        connection,
-      )
+  let existing_column_names = existing_columns(connection)
+  let ensure_column = fn(name) {
+    case list.contains(existing_column_names, name) {
+      True -> Nil
+      False -> {
+        let assert Ok(_) =
+          sqlight.exec(
+            "alter table tb_count add column " <> name <> " text;",
+            connection,
+          )
 
-    Nil
+        Nil
+      }
+    }
   }
 
-  add_column("created_at")
-  add_column("updated_at")
+  ensure_column("created_at")
+  ensure_column("updated_at")
 
   Nil
+}
+
+fn existing_columns(connection) -> List(String) {
+  let assert Ok(columns) =
+    sqlight.query(
+      "pragma table_info('tb_count');",
+      with: [],
+      on: connection,
+      expecting: dynamic.element(1, dynamic.string),
+    )
+
+  columns
 }
 
 pub fn get_counter(connection, name) {
