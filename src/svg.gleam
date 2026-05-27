@@ -25,57 +25,55 @@ fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
   )
 }
 
-fn images(image_cache, theme, digits, width, height, svgs) {
-  case digits {
-    [] -> XmlImages(svgs, width, height)
-    [digit, ..rest] ->
+fn images(image_cache, theme, digits) -> XmlImages {
+  list.fold(
+    digits,
+    XmlImages(string_builder.new(), 0, 0),
+    fn(accumulator, digit) {
       case cache.get_image(image_cache, theme, digit) {
         Ok(cached_image) ->
-          images(
-            image_cache,
-            theme,
-            rest,
-            width + cached_image.info.width,
-            int.max(height, cached_image.info.height),
-            append_image(svgs, cached_image.base64, cached_image.info, width),
+          XmlImages(
+            append_image(
+              accumulator.xml,
+              cached_image.base64,
+              cached_image.info,
+              accumulator.width,
+            ),
+            accumulator.width + cached_image.info.width,
+            int.max(accumulator.height, cached_image.info.height),
           )
-        _ -> images(image_cache, theme, rest, width, height, svgs)
+        _ -> accumulator
       }
+    },
+  )
+}
+
+fn pad_digits(number, padding) -> List(Int) {
+  let assert Ok(digits) = int.digits(int.absolute_value(number), 10)
+  let digits_padding = padding - list.length(digits)
+
+  case digits_padding > 0 {
+    True -> list.append(list.repeat(0, digits_padding), digits)
+    False -> digits
   }
 }
 
 pub fn xml(image_cache, theme, number, padding) {
-  let xml =
-    images(
-      image_cache,
-      theme,
-      {
-        let assert Ok(digits) = int.digits(int.absolute_value(number), 10)
-        let digits_padding = padding - list.length(digits)
-
-        case digits_padding > 0 {
-          True -> list.append(list.repeat(0, digits_padding), digits)
-          False -> digits
-        }
-      },
-      0,
-      0,
-      string_builder.new(),
-    )
+  let rendered_images = images(image_cache, theme, pad_digits(number, padding))
 
   string_builder.new()
   |> string_builder.append(
     "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><svg height=\"",
   )
-  |> string_builder.append(int.to_string(xml.height))
+  |> string_builder.append(int.to_string(rendered_images.height))
   |> string_builder.append(
     "\" style=\"image-rendering: pixelated;\" version=\"1.1\" width=\"",
   )
-  |> string_builder.append(int.to_string(xml.width))
+  |> string_builder.append(int.to_string(rendered_images.width))
   |> string_builder.append(
     "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
   )
-  |> string_builder.append_builder(xml.xml)
+  |> string_builder.append_builder(rendered_images.xml)
   |> string_builder.append("</g></svg>")
   |> string_builder.to_string()
 }
