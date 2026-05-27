@@ -55,7 +55,12 @@ fn load_theme(theme) -> Dict(Int, CachedImage) {
 
 fn parse_digit_filename(file) {
   case string.split(file, ".") {
-    [digit, _extension] -> int.parse(digit)
+    [digit, _extension] ->
+      case int.parse(digit) {
+        Ok(parsed_digit) if parsed_digit >= 0 && parsed_digit <= 9 ->
+          Ok(parsed_digit)
+        _ -> Error(Nil)
+      }
     _ -> Error(Nil)
   }
 }

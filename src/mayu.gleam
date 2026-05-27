@@ -12,7 +12,16 @@ import wisp
 pub fn main() {
   wisp.configure_logger()
 
-  let _ = simplifile.create_directory("./data")
+  case simplifile.create_directory("./data") {
+    Ok(_) | Error(simplifile.Eexist) -> Nil
+    Error(error) -> {
+      wisp.log_error(
+        "Failed to create ./data directory: "
+        <> simplifile.describe_error(error),
+      )
+      panic as "cannot create data directory"
+    }
+  }
   let image_cache = cache.load_themes()
   let version_tag = case envoy.get("MAYU_VERSION") {
     Ok(version) -> "(v" <> version <> ")"
