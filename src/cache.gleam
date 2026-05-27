@@ -2,7 +2,6 @@ import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
-import gleam/option.{type Option}
 import gleam/result
 import gleam/string
 import image
@@ -85,8 +84,7 @@ fn load_cached_image(path) {
   }
 }
 
-pub fn get_image(cache, theme, digit) -> Option(CachedImage) {
+pub fn get_image(cache, theme, digit) -> Result(CachedImage, Nil) {
   dict.get(cache, theme)
   |> result.then(fn(theme_images) { dict.get(theme_images, digit) })
-  |> option.from_result
 }

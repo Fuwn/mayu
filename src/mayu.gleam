@@ -29,8 +29,8 @@ pub fn main() {
   let secret_key_base = wisp.random_string(64)
   let assert Ok(_) =
     wisp.mist_handler(
-      fn(request) {
-        request.handle(request, connection, image_cache, index_html)
+      fn(incoming_request) {
+        request.handle(incoming_request, connection, image_cache, index_html)
       },
       secret_key_base,
     )

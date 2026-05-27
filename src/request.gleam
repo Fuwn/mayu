@@ -20,13 +20,10 @@ pub fn handle(request, connection, image_cache, index_html) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
-    [] ->
-      case index_html {
-        "" -> wisp.not_found()
-        content -> wisp.html_response(string_builder.from_string(content), 200)
-      }
+    [] -> wisp.html_response(string_builder.from_string(index_html), 200)
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)
+    ["get", "@" <> name] if name == "" -> wisp.bad_request()
     ["get", "@" <> name] -> {
       case database.get_counter(connection, name) {
         Ok(counter) -> {
@@ -56,6 +53,7 @@ pub fn handle(request, connection, image_cache, index_html) {
         Error(_) -> wisp.unprocessable_entity()
       }
     }
+    ["record", "@" <> name] if name == "" -> wisp.bad_request()
     ["record", "@" <> name] -> {
       case database.get_counter(connection, name) {
         Ok(counter) -> {

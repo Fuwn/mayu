@@ -1,7 +1,6 @@
 import cache
 import gleam/int
 import gleam/list
-import gleam/option.{Some}
 import gleam/string_builder.{type StringBuilder}
 import image
 
@@ -9,19 +8,21 @@ type XmlImages {
   XmlImages(xml: StringBuilder, width: Int, height: Int)
 }
 
-fn append_image(svgs, base64, image: image.ImageInformation, width) {
-  svgs
-  |> string_builder.append("<image height=\"")
-  |> string_builder.append(int.to_string(image.height))
-  |> string_builder.append("\" width=\"")
-  |> string_builder.append(int.to_string(image.width))
-  |> string_builder.append("\" x=\"")
-  |> string_builder.append(int.to_string(width))
-  |> string_builder.append("\" y=\"0\" xlink:href=\"data:image/")
-  |> string_builder.append(image.extension)
-  |> string_builder.append(";base64,")
-  |> string_builder.append(base64)
-  |> string_builder.append("\"/>")
+fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
+  string_builder.append(
+    svgs,
+    "<image height=\""
+      <> int.to_string(image.height)
+      <> "\" width=\""
+      <> int.to_string(image.width)
+      <> "\" x=\""
+      <> int.to_string(x_offset)
+      <> "\" y=\"0\" xlink:href=\"data:image/"
+      <> image.extension
+      <> ";base64,"
+      <> base64
+      <> "\"/>",
+  )
 }
 
 fn images(image_cache, theme, digits, width, height, svgs) {
@@ -29,14 +30,14 @@ fn images(image_cache, theme, digits, width, height, svgs) {
     [] -> XmlImages(svgs, width, height)
     [digit, ..rest] ->
       case cache.get_image(image_cache, theme, digit) {
-        Some(cached) ->
+        Ok(cached_image) ->
           images(
             image_cache,
             theme,
             rest,
-            width + cached.info.width,
-            int.max(height, cached.info.height),
-            append_image(svgs, cached.base64, cached.info, width),
+            width + cached_image.info.width,
+            int.max(height, cached_image.info.height),
+            append_image(svgs, cached_image.base64, cached_image.info, width),
           )
         _ -> images(image_cache, theme, rest, width, height, svgs)
       }
@@ -52,9 +53,9 @@ pub fn xml(image_cache, theme, number, padding) {
         let assert Ok(digits) = int.digits(int.absolute_value(number), 10)
         let digits_padding = padding - list.length(digits)
 
-        case digits_padding {
-          n if n > 0 -> list.concat([list.repeat(0, digits_padding), digits])
-          _ -> digits
+        case digits_padding > 0 {
+          True -> list.append(list.repeat(0, digits_padding), digits)
+          False -> digits
         }
       },
       0,
