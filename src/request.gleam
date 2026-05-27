@@ -2,9 +2,16 @@ import database
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/result
 import gleam/string_builder
 import svg
 import wisp
+
+const default_theme = "asoul"
+
+const default_padding = 6
+
+const max_padding = 32
 
 fn middleware(request, handle) {
   let request = wisp.method_override(request)
@@ -14,6 +21,17 @@ fn middleware(request, handle) {
   use request <- wisp.handle_head(request)
 
   handle(request)
+}
+
+fn query_theme(query) -> String {
+  list.key_find(query, "theme") |> result.unwrap(default_theme)
+}
+
+fn query_padding(query) -> Int {
+  list.key_find(query, "padding")
+  |> result.then(int.parse)
+  |> result.map(int.clamp(_, min: 0, max: max_padding))
+  |> result.unwrap(default_padding)
 }
 
 pub fn handle(request, connection, image_cache, index_html) {
@@ -31,24 +49,12 @@ pub fn handle(request, connection, image_cache, index_html) {
 
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
-          |> wisp.string_body(
-            svg.xml(
-              image_cache,
-              case list.key_find(query, "theme") {
-                Ok(theme) -> theme
-                _ -> "asoul"
-              },
-              counter.num,
-              case list.key_find(query, "padding") {
-                Ok(padding) ->
-                  case int.parse(padding) {
-                    Ok(n) -> int.clamp(n, min: 0, max: 32)
-                    Error(_) -> 6
-                  }
-                _ -> 6
-              },
-            ),
-          )
+          |> wisp.string_body(svg.xml(
+            image_cache,
+            query_theme(query),
+            counter.num,
+            query_padding(query),
+          ))
         }
         Error(_) -> wisp.unprocessable_entity()
       }
