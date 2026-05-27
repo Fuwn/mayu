@@ -16,42 +16,41 @@ pub type ThemeCache =
   Dict(String, Dict(Int, CachedImage))
 
 pub fn load_themes() {
-  list.fold(
-    case simplifile.read_directory("./themes") {
-      Ok(files) -> files
-      Error(_) -> {
-        wisp.log_error("Error reading themes directory")
+  let themes = case simplifile.read_directory("./themes") {
+    Ok(files) -> files
+    Error(_) -> {
+      wisp.log_error("Error reading themes directory")
 
-        []
-      }
-    },
-    dict.new(),
-    fn(accumulated_themes, theme) {
-      dict.insert(accumulated_themes, theme, load_theme(theme))
-    },
-  )
+      []
+    }
+  }
+
+  themes
+  |> list.map(fn(theme) { #(theme, load_theme(theme)) })
+  |> dict.from_list
 }
 
 fn load_theme(theme) -> Dict(Int, CachedImage) {
   let theme_directory = "./themes/" <> theme
-
-  case simplifile.read_directory(theme_directory) {
-    Ok(files) ->
-      list.fold(files, dict.new(), fn(accumulated_digits, file) {
-        case parse_digit_filename(file) {
-          Ok(digit) ->
-            load_cached_image(theme_directory <> "/" <> file)
-            |> result.map(dict.insert(accumulated_digits, digit, _))
-            |> result.unwrap(accumulated_digits)
-          Error(_) -> accumulated_digits
-        }
-      })
+  let files = case simplifile.read_directory(theme_directory) {
+    Ok(files) -> files
     Error(_) -> {
       wisp.log_error("Error reading theme directory " <> theme_directory)
 
-      dict.new()
+      []
     }
   }
+
+  files
+  |> list.filter_map(fn(file) {
+    use digit <- result.try(parse_digit_filename(file))
+    use cached_image <- result.try(load_cached_image(
+      theme_directory <> "/" <> file,
+    ))
+
+    Ok(#(digit, cached_image))
+  })
+  |> dict.from_list
 }
 
 fn parse_digit_filename(file) {
