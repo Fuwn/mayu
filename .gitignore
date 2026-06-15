@@ -16,3 +16,9 @@ result
 
 # macOS
 .DS_Store
+
+# Themes
+/themes/*
+!/themes/garukura/
+!/themes/lain/
+!/themes/urushi/

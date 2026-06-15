@@ -5,7 +5,7 @@ FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine AS build
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
 # hadolint ignore=DL3018
-RUN apk add --no-cache build-base
+RUN apk add --no-cache build-base git rsync bash
 
 WORKDIR /mayu
 
@@ -13,6 +13,11 @@ COPY gleam.toml manifest.toml ./
 COPY src/ ./src/
 
 RUN gleam build
+
+COPY themes/ ./themes/
+COPY scripts/ ./scripts/
+
+RUN ./scripts/sync-themes.sh
 
 WORKDIR /mayu/build
 
@@ -25,7 +30,7 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 WORKDIR /mayu
 
 COPY --from=build /mayu/build/erlang-shipment/ ./erlang-shipment/
-COPY themes/ ./themes/
+COPY --from=build /mayu/themes/ ./themes/
 COPY index.html ./
 COPY gleam.toml ./
 
