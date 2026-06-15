@@ -2,6 +2,7 @@ import cache
 import database
 import envoy
 import gleam/erlang/process
+import gleam/list
 import gleam/string
 import mist
 import request
@@ -29,7 +30,9 @@ pub fn main() {
   }
   let assert Ok(index_html_source) = simplifile.read("index.html")
   let index_html =
-    string.replace(index_html_source, "{{ MAYU_VERSION }}", version_tag)
+    index_html_source
+    |> string.replace("{{ MAYU_VERSION }}", version_tag)
+    |> string.replace("{{ THEME_OPTIONS }}", theme_options(image_cache))
 
   use connection <- sqlight.with_connection("./data/count.db")
 
@@ -48,4 +51,31 @@ pub fn main() {
     |> mist.start_http
 
   process.sleep_forever()
+}
+
+fn theme_options(image_cache) {
+  image_cache
+  |> cache.theme_names
+  |> list.sort(string.compare)
+  |> list.map(theme_option)
+  |> string.join("\n")
+}
+
+fn theme_option(slug) {
+  "<option value=\"" <> slug <> "\">" <> prettify_slug(slug) <> "</option>"
+}
+
+fn prettify_slug(slug) {
+  slug
+  |> string.replace("_", "-")
+  |> string.split(on: "-")
+  |> list.map(capitalize)
+  |> string.join(" ")
+}
+
+fn capitalize(word) {
+  case string.pop_grapheme(word) {
+    Ok(#(first, rest)) -> string.uppercase(first) <> rest
+    Error(_) -> word
+  }
 }

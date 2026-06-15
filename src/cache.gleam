@@ -100,3 +100,7 @@ pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
   dict.get(cache, theme)
   |> result.then(fn(theme_images) { dict.get(theme_images, glyph) })
 }
+
+pub fn theme_names(cache) {
+  dict.keys(cache)
+}
