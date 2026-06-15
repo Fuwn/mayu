@@ -56,6 +56,7 @@ pub fn main() {
 fn theme_options(image_cache) {
   image_cache
   |> cache.theme_names
+  |> list.filter(fn(slug) { !string.ends_with(slug, "-h") })
   |> list.sort(string.compare)
   |> list.map(theme_option)
   |> string.join("\n")
