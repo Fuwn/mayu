@@ -12,8 +12,14 @@ pub type CachedImage {
   CachedImage(base64: String, info: image.ImageInformation)
 }
 
+pub type Glyph {
+  Digit(Int)
+  Start
+  End
+}
+
 pub type ThemeCache =
-  Dict(String, Dict(Int, CachedImage))
+  Dict(String, Dict(Glyph, CachedImage))
 
 pub fn load_themes() {
   let themes = case simplifile.read_directory("./themes") {
@@ -30,7 +36,7 @@ pub fn load_themes() {
   |> dict.from_list
 }
 
-fn load_theme(theme) -> Dict(Int, CachedImage) {
+fn load_theme(theme) -> Dict(Glyph, CachedImage) {
   let theme_directory = "./themes/" <> theme
   let files = case simplifile.read_directory(theme_directory) {
     Ok(files) -> files
@@ -43,22 +49,24 @@ fn load_theme(theme) -> Dict(Int, CachedImage) {
 
   files
   |> list.filter_map(fn(file) {
-    use digit <- result.try(parse_digit_filename(file))
+    use glyph <- result.try(parse_glyph_filename(file))
     use cached_image <- result.try(load_cached_image(
       theme_directory <> "/" <> file,
     ))
 
-    Ok(#(digit, cached_image))
+    Ok(#(glyph, cached_image))
   })
   |> dict.from_list
 }
 
-fn parse_digit_filename(file) {
+fn parse_glyph_filename(file) {
   case string.split(file, ".") {
+    ["_start", _extension] -> Ok(Start)
+    ["_end", _extension] -> Ok(End)
     [digit, _extension] ->
       case int.parse(digit) {
         Ok(parsed_digit) if parsed_digit >= 0 && parsed_digit <= 9 ->
-          Ok(parsed_digit)
+          Ok(Digit(parsed_digit))
         _ -> Error(Nil)
       }
     _ -> Error(Nil)
@@ -88,7 +96,7 @@ fn load_cached_image(path) {
   }
 }
 
-pub fn get_image(cache, theme, digit) -> Result(CachedImage, Nil) {
+pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
   dict.get(cache, theme)
-  |> result.then(fn(theme_images) { dict.get(theme_images, digit) })
+  |> result.then(fn(theme_images) { dict.get(theme_images, glyph) })
 }

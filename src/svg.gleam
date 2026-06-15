@@ -25,12 +25,12 @@ fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
   )
 }
 
-fn images(image_cache, theme, digits) -> XmlImages {
+fn images(image_cache, theme, glyphs) -> XmlImages {
   list.fold(
-    digits,
+    glyphs,
     XmlImages(string_builder.new(), 0, 0),
-    fn(accumulator, digit) {
-      case cache.get_image(image_cache, theme, digit) {
+    fn(accumulator, glyph) {
+      case cache.get_image(image_cache, theme, glyph) {
         Ok(cached_image) ->
           XmlImages(
             append_image(
@@ -58,8 +58,14 @@ fn pad_digits(number, padding) -> List(Int) {
   }
 }
 
+fn glyphs(number, padding) {
+  let digits = list.map(pad_digits(number, padding), cache.Digit)
+
+  [cache.Start, ..list.append(digits, [cache.End])]
+}
+
 pub fn xml(image_cache, theme, number, padding) {
-  let rendered_images = images(image_cache, theme, pad_digits(number, padding))
+  let rendered_images = images(image_cache, theme, glyphs(number, padding))
 
   string_builder.new()
   |> string_builder.append(
