@@ -53,6 +53,8 @@ pub fn main() {
   process.sleep_forever()
 }
 
+const default_theme = "asoul"
+
 fn theme_options(image_cache) {
   image_cache
   |> cache.theme_names
@@ -63,7 +65,18 @@ fn theme_options(image_cache) {
 }
 
 fn theme_option(slug) {
-  "<option value=\"" <> slug <> "\">" <> prettify_slug(slug) <> "</option>"
+  let selected = case slug == default_theme {
+    True -> " selected"
+    False -> ""
+  }
+
+  "<option value=\""
+  <> slug
+  <> "\""
+  <> selected
+  <> ">"
+  <> prettify_slug(slug)
+  <> "</option>"
 }
 
 fn prettify_slug(slug) {
