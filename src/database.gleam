@@ -1,4 +1,5 @@
 import gleam/dynamic
+import gleam/int
 import gleam/list
 import gleam/option
 import sqlight
@@ -95,5 +96,17 @@ pub fn get_counter(connection, name) {
         }
       }
     }
+  }
+}
+
+pub fn prune(connection, min_count: Int, max_age_days: Int) -> Nil {
+  let statement = "delete from tb_count
+     where num < " <> int.to_string(min_count) <> "
+       and updated_at is not null
+       and updated_at < datetime('now', '-" <> int.to_string(max_age_days) <> " days');"
+
+  case sqlight.exec(statement, connection) {
+    Ok(_) -> Nil
+    Error(_) -> wisp.log_error("Failed to prune stale counters")
   }
 }

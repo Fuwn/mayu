@@ -2,7 +2,9 @@ import cache
 import database
 import envoy
 import gleam/erlang/process
+import gleam/int
 import gleam/list
+import gleam/result
 import gleam/string
 import mist
 import request
@@ -40,6 +42,7 @@ pub fn main() {
   use connection <- sqlight.with_connection("./data/count.db")
 
   database.setup(connection)
+  start_pruner(connection)
 
   let secret_key_base = wisp.random_string(64)
   let assert Ok(_) =
@@ -54,6 +57,47 @@ pub fn main() {
     |> mist.start_http
 
   process.sleep_forever()
+}
+
+fn start_pruner(connection) -> Nil {
+  case prune_config() {
+    Ok(#(min_count, max_age_days, interval_hours)) -> {
+      let _ =
+        process.start(
+          fn() {
+            prune_loop(connection, min_count, max_age_days, interval_hours)
+          },
+          False,
+        )
+
+      wisp.log_info("Counter pruning enabled")
+    }
+    Error(_) -> Nil
+  }
+}
+
+fn prune_loop(connection, min_count, max_age_days, interval_hours) {
+  process.sleep(interval_hours * 3600 * 1000)
+  database.prune(connection, min_count, max_age_days)
+  prune_loop(connection, min_count, max_age_days, interval_hours)
+}
+
+fn prune_config() -> Result(#(Int, Int, Int), Nil) {
+  use min_count <- result.try(positive_env_int("MAYU_PRUNE_MIN_COUNT"))
+  use max_age_days <- result.try(positive_env_int("MAYU_PRUNE_AFTER_DAYS"))
+  use interval_hours <- result.try(positive_env_int("MAYU_PRUNE_EVERY_HOURS"))
+
+  Ok(#(min_count, max_age_days, interval_hours))
+}
+
+fn positive_env_int(name) -> Result(Int, Nil) {
+  use value <- result.try(envoy.get(name))
+  use parsed <- result.try(int.parse(value))
+
+  case parsed > 0 {
+    True -> Ok(parsed)
+    False -> Error(Nil)
+  }
 }
 
 const default_theme = "asoul"
