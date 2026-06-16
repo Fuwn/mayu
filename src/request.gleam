@@ -49,7 +49,7 @@ pub fn handle(request, connection, image_cache, index_html) {
 
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
-          |> wisp.string_body(svg.xml(
+          |> wisp.string_builder_body(svg.xml(
             image_cache,
             query_theme(query),
             counter.num,

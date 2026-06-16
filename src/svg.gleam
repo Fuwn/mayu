@@ -9,20 +9,18 @@ type XmlImages {
 }
 
 fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
-  string_builder.append(
-    svgs,
-    "<image height=\""
-      <> int.to_string(image.height)
-      <> "\" width=\""
-      <> int.to_string(image.width)
-      <> "\" x=\""
-      <> int.to_string(x_offset)
-      <> "\" y=\"0\" xlink:href=\"data:image/"
-      <> image.extension
-      <> ";base64,"
-      <> base64
-      <> "\"/>",
-  )
+  svgs
+  |> string_builder.append("<image height=\"")
+  |> string_builder.append(int.to_string(image.height))
+  |> string_builder.append("\" width=\"")
+  |> string_builder.append(int.to_string(image.width))
+  |> string_builder.append("\" x=\"")
+  |> string_builder.append(int.to_string(x_offset))
+  |> string_builder.append("\" y=\"0\" xlink:href=\"data:image/")
+  |> string_builder.append(image.extension)
+  |> string_builder.append(";base64,")
+  |> string_builder.append(base64)
+  |> string_builder.append("\"/>")
 }
 
 fn images(image_cache, theme, glyphs) -> XmlImages {
@@ -81,5 +79,4 @@ pub fn xml(image_cache, theme, number, padding) {
   )
   |> string_builder.append_builder(rendered_images.xml)
   |> string_builder.append("</g></svg>")
-  |> string_builder.to_string()
 }
