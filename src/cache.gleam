@@ -1,3 +1,4 @@
+import envoy
 import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/int
@@ -28,6 +29,15 @@ pub fn store(cache: ThemeCache) -> Nil
 pub fn read() -> ThemeCache
 
 pub fn load_themes() {
+  let enabled_themes = case envoy.get("MAYU_THEMES") {
+    Ok(value) ->
+      value
+      |> string.split(",")
+      |> list.map(string.trim)
+      |> list.filter(fn(name) { name != "" })
+    Error(_) -> []
+  }
+
   let themes = case simplifile.read_directory("./themes") {
     Ok(files) -> files
     Error(_) -> {
@@ -37,7 +47,12 @@ pub fn load_themes() {
     }
   }
 
-  themes
+  let selected_themes = case enabled_themes {
+    [] -> themes
+    _ -> list.filter(themes, fn(theme) { list.contains(enabled_themes, theme) })
+  }
+
+  selected_themes
   |> list.map(fn(theme) { #(theme, load_theme(theme)) })
   |> dict.from_list
 }
