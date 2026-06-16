@@ -11,6 +11,13 @@ pub type Counter {
 pub fn setup(connection) {
   let assert Ok(_) =
     sqlight.exec(
+      "pragma journal_mode = wal;
+       pragma synchronous = normal;
+       pragma busy_timeout = 5000;",
+      connection,
+    )
+  let assert Ok(_) =
+    sqlight.exec(
       "create table if not exists tb_count (
         id integer primary key autoincrement not null unique,
         name text not null unique,

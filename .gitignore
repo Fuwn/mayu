@@ -10,6 +10,8 @@ erl_crash.dump
 # SQLite
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
 
 # Nix
 result
