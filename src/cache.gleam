@@ -85,7 +85,7 @@ fn load_cached_image(path) {
       case image.get_image_information(image_data) {
         Ok(info) ->
           Ok(CachedImage(
-            base64: bit_array.base64_encode(image_data, False),
+            base64: bit_array.base64_encode(image_data, True),
             info: info,
           ))
         Error(_) -> {
