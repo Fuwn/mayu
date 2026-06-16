@@ -34,7 +34,7 @@ E.g., [mayu.due.moe/get/@demo?theme=urushi](https://mayu.due.moe/get/@demo?theme
 - `lain`
 - `garukura`
 
-Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behaviour by changing the `padding` query parameter of any `get` operation.
+Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behaviour by changing the `padding` query parameter of any `get` operation, up to a maximum of 12.
 
 ### Local
 

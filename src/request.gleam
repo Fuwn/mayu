@@ -11,7 +11,7 @@ const default_theme = "asoul"
 
 const default_padding = 6
 
-const max_padding = 32
+const max_padding = 12
 
 fn middleware(request, handle) {
   let request = wisp.method_override(request)
