@@ -24,6 +24,9 @@ pub fn main() {
     }
   }
   let image_cache = cache.load_themes()
+
+  cache.store(image_cache)
+
   let version_tag = case envoy.get("MAYU_VERSION") {
     Ok(version) -> "(v" <> version <> ")"
     Error(_) -> ""
@@ -42,7 +45,7 @@ pub fn main() {
   let assert Ok(_) =
     wisp.mist_handler(
       fn(incoming_request) {
-        request.handle(incoming_request, connection, image_cache, index_html)
+        request.handle(incoming_request, connection, index_html)
       },
       secret_key_base,
     )

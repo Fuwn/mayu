@@ -62,7 +62,8 @@ fn glyphs(number, padding) {
   [cache.Start, ..list.append(digits, [cache.End])]
 }
 
-pub fn xml(image_cache, theme, number, padding) {
+pub fn xml(theme, number, padding) {
+  let image_cache = cache.read()
   let rendered_images = images(image_cache, theme, glyphs(number, padding))
 
   string_builder.new()

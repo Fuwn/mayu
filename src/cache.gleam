@@ -21,6 +21,12 @@ pub type Glyph {
 pub type ThemeCache =
   Dict(String, Dict(Glyph, CachedImage))
 
+@external(erlang, "cache_ffi", "store")
+pub fn store(cache: ThemeCache) -> Nil
+
+@external(erlang, "cache_ffi", "read")
+pub fn read() -> ThemeCache
+
 pub fn load_themes() {
   let themes = case simplifile.read_directory("./themes") {
     Ok(files) -> files

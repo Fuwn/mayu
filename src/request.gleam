@@ -34,7 +34,7 @@ fn query_padding(query) -> Int {
   |> result.unwrap(default_padding)
 }
 
-pub fn handle(request, connection, image_cache, index_html) {
+pub fn handle(request, connection, index_html) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
@@ -50,7 +50,6 @@ pub fn handle(request, connection, image_cache, index_html) {
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
           |> wisp.string_builder_body(svg.xml(
-            image_cache,
             query_theme(query),
             counter.num,
             query_padding(query),
