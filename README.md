@@ -62,6 +62,20 @@ Mayu has the same default database layout as Moe-Counter, so if you've already u
 
 Mayu additionally adds two database columns: `created_at` and `updated_at`, which will not affect standard operations in any way, but will allow for additional data to be available should you perform a `record` operation.
 
+### Configuration
+
+Mayu is configured through environment variables, all of which are optional.
+
+| Variable | Description |
+| --- | --- |
+| `MAYU_THEMES` | Comma-separated allowlist of themes to load, e.g. `asoul,garukura`. When unset, every theme is loaded. Restricting it lowers memory use and caps the maximum response size. |
+| `MAYU_VERSION` | Version string shown on the index page. Set automatically by the Docker image. |
+| `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
+| `MAYU_PRUNE_AFTER_DAYS` | Counters not incremented within this many days are eligible for pruning. |
+| `MAYU_PRUNE_EVERY_HOURS` | How often, in hours, the prune sweep runs. |
+
+Counter pruning is disabled unless all three `MAYU_PRUNE_*` variables are set to positive integers. When enabled, each sweep deletes counters that are both idle and low: not incremented within `MAYU_PRUNE_AFTER_DAYS` *and* below `MAYU_PRUNE_MIN_COUNT` hits. Actively used counters and high-count counters are always kept, so abandoned throwaway counters are reclaimed without affecting real ones.
+
 ### Routes
 
 - `/heart-beat`: `alive`
