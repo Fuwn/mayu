@@ -68,16 +68,38 @@ fn load_theme(theme) -> Dict(Glyph, CachedImage) {
     }
   }
 
-  files
-  |> list.filter_map(fn(file) {
-    use glyph <- result.try(parse_glyph_filename(file))
-    use cached_image <- result.try(load_cached_image(
-      theme_directory <> "/" <> file,
-    ))
+  let glyphs =
+    files
+    |> list.filter_map(fn(file) {
+      use glyph <- result.try(parse_glyph_filename(file))
+      use cached_image <- result.try(load_cached_image(
+        theme_directory <> "/" <> file,
+      ))
 
-    Ok(#(glyph, cached_image))
-  })
-  |> dict.from_list
+      Ok(#(glyph, cached_image))
+    })
+    |> dict.from_list
+
+  warn_if_incomplete(theme, glyphs)
+
+  glyphs
+}
+
+fn warn_if_incomplete(theme, glyphs) -> Nil {
+  let missing =
+    list.range(0, 9)
+    |> list.filter(fn(digit) { !dict.has_key(glyphs, Digit(digit)) })
+
+  case missing {
+    [] -> Nil
+    _ ->
+      wisp.log_warning(
+        "Theme "
+        <> theme
+        <> " is missing digit glyphs: "
+        <> { missing |> list.map(int.to_string) |> string.join(", ") },
+      )
+  }
 }
 
 fn parse_glyph_filename(file) {
