@@ -77,7 +77,21 @@ fn start_pruner(connection) -> Nil {
 
       wisp.log_info("Counter pruning enabled")
     }
-    Error(_) -> Nil
+    Error(_) -> {
+      let any_variable_set =
+        list.any(prune_variable_names, fn(name) {
+          result.is_ok(envoy.get(name))
+        })
+
+      case any_variable_set {
+        True ->
+          wisp.log_warning(
+            "Counter pruning disabled: set all three MAYU_PRUNE_* variables"
+            <> " to positive integers",
+          )
+        False -> Nil
+      }
+    }
   }
 }
 
@@ -101,12 +115,16 @@ fn sleep_hours(hours) -> Nil {
   }
 }
 
-fn prune_config() -> Result(#(Int, Int, Int), Nil) {
-  use min_count <- result.try(positive_env_int("MAYU_PRUNE_MIN_COUNT"))
-  use max_age_days <- result.try(positive_env_int("MAYU_PRUNE_AFTER_DAYS"))
-  use interval_hours <- result.try(positive_env_int("MAYU_PRUNE_EVERY_HOURS"))
+const prune_variable_names = [
+  "MAYU_PRUNE_MIN_COUNT", "MAYU_PRUNE_AFTER_DAYS", "MAYU_PRUNE_EVERY_HOURS",
+]
 
-  Ok(#(min_count, max_age_days, interval_hours))
+fn prune_config() -> Result(#(Int, Int, Int), Nil) {
+  case list.map(prune_variable_names, positive_env_int) {
+    [Ok(min_count), Ok(max_age_days), Ok(interval_hours)] ->
+      Ok(#(min_count, max_age_days, interval_hours))
+    _ -> Error(Nil)
+  }
 }
 
 fn positive_env_int(name) -> Result(Int, Nil) {
