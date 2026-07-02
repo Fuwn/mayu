@@ -8,8 +8,6 @@ import gleam/string_builder
 import svg
 import wisp
 
-const default_theme = "asoul"
-
 const default_padding = 6
 
 const max_padding = 12
@@ -31,7 +29,7 @@ fn require_valid_name(name, continue) {
   }
 }
 
-fn query_theme(query) -> String {
+fn query_theme(query, default_theme) -> String {
   list.key_find(query, "theme") |> result.unwrap(default_theme)
 }
 
@@ -42,7 +40,7 @@ fn query_padding(query) -> Int {
   |> result.unwrap(default_padding)
 }
 
-pub fn handle(request, connection, index_html) {
+pub fn handle(request, connection, index_html, default_theme) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
@@ -63,7 +61,7 @@ pub fn handle(request, connection, index_html) {
             "max-age=0, no-cache, no-store, must-revalidate",
           )
           |> wisp.string_builder_body(svg.xml(
-            query_theme(query),
+            query_theme(query, default_theme),
             counter.num,
             query_padding(query),
           ))

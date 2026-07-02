@@ -147,3 +147,21 @@ pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
 pub fn theme_names(cache) {
   dict.keys(cache)
 }
+
+const preferred_default_theme = "asoul"
+
+pub fn default_theme(cache) -> String {
+  let names =
+    cache
+    |> dict.keys
+    |> list.sort(string.compare)
+
+  case list.contains(names, preferred_default_theme) {
+    True -> preferred_default_theme
+    False ->
+      names
+      |> list.filter(fn(name) { !string.ends_with(name, "-h") })
+      |> list.first
+      |> result.unwrap(preferred_default_theme)
+  }
+}

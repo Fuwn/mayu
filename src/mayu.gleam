@@ -29,6 +29,7 @@ pub fn main() {
 
   cache.store(image_cache)
 
+  let default_theme = cache.default_theme(image_cache)
   let version_tag = case envoy.get("MAYU_VERSION") {
     Ok(version) -> "(v" <> version <> ")"
     Error(_) -> ""
@@ -37,7 +38,11 @@ pub fn main() {
   let index_html =
     index_html_source
     |> string.replace("{{ MAYU_VERSION }}", version_tag)
-    |> string.replace("{{ THEME_OPTIONS }}", theme_options(image_cache))
+    |> string.replace("{{ DEFAULT_THEME }}", default_theme)
+    |> string.replace(
+      "{{ THEME_OPTIONS }}",
+      theme_options(image_cache, default_theme),
+    )
 
   use connection <- sqlight.with_connection("./data/count.db")
 
@@ -48,7 +53,7 @@ pub fn main() {
   let assert Ok(_) =
     wisp.mist_handler(
       fn(incoming_request) {
-        request.handle(incoming_request, connection, index_html)
+        request.handle(incoming_request, connection, index_html, default_theme)
       },
       secret_key_base,
     )
@@ -100,18 +105,16 @@ fn positive_env_int(name) -> Result(Int, Nil) {
   }
 }
 
-const default_theme = "asoul"
-
-fn theme_options(image_cache) {
+fn theme_options(image_cache, default_theme) {
   image_cache
   |> cache.theme_names
   |> list.filter(fn(slug) { !string.ends_with(slug, "-h") })
   |> list.sort(string.compare)
-  |> list.map(theme_option)
+  |> list.map(fn(slug) { theme_option(slug, default_theme) })
   |> string.join("\n")
 }
 
-fn theme_option(slug) {
+fn theme_option(slug, default_theme) {
   let selected = case slug == default_theme {
     True -> " selected"
     False -> ""

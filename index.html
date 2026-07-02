@@ -266,7 +266,7 @@
       ).get("theme");
       const defaultConfiguration = {
         id: new URLSearchParams(window.location.search).get("id") || "demo",
-        theme: themeQueryParameter || "asoul",
+        theme: themeQueryParameter || "{{ DEFAULT_THEME }}",
       };
       let inputTimeout;
       const idInput = document.getElementById("idInput");
