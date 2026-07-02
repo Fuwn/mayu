@@ -62,6 +62,7 @@ pub fn handle(request, connection, index_html, default_theme) {
           )
           |> wisp.string_builder_body(svg.xml(
             query_theme(query, default_theme),
+            default_theme,
             counter.num,
             query_padding(query),
           ))

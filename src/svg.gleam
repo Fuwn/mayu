@@ -1,4 +1,5 @@
 import cache
+import gleam/dict
 import gleam/int
 import gleam/list
 import gleam/string_builder.{type StringBuilder}
@@ -62,8 +63,12 @@ fn glyphs(number, padding) {
   [cache.Start, ..list.append(digits, [cache.End])]
 }
 
-pub fn xml(theme, number, padding) {
+pub fn xml(theme, fallback_theme, number, padding) {
   let image_cache = cache.read()
+  let theme = case dict.has_key(image_cache, theme) {
+    True -> theme
+    False -> fallback_theme
+  }
   let rendered_images = images(image_cache, theme, glyphs(number, padding))
 
   string_builder.new()
