@@ -82,9 +82,23 @@ fn start_pruner(connection) -> Nil {
 }
 
 fn prune_loop(connection, min_count, max_age_days, interval_hours) {
-  process.sleep(interval_hours * 3600 * 1000)
+  sleep_hours(interval_hours)
   database.prune(connection, min_count, max_age_days)
   prune_loop(connection, min_count, max_age_days, interval_hours)
+}
+
+const milliseconds_per_hour = 3_600_000
+
+// Erlang caps receive timeouts at about 49 days, and a longer sleep crashes
+// the process. Sleeping one hour at a time keeps any interval valid.
+fn sleep_hours(hours) -> Nil {
+  case hours > 0 {
+    True -> {
+      process.sleep(milliseconds_per_hour)
+      sleep_hours(hours - 1)
+    }
+    False -> Nil
+  }
 }
 
 fn prune_config() -> Result(#(Int, Int, Int), Nil) {
