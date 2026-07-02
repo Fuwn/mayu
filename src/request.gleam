@@ -47,6 +47,10 @@ pub fn handle(request, connection, index_html) {
 
           wisp.ok()
           |> wisp.set_header("Content-Type", "image/svg+xml")
+          |> wisp.set_header(
+            "Cache-Control",
+            "max-age=0, no-cache, no-store, must-revalidate",
+          )
           |> wisp.string_builder_body(svg.xml(
             query_theme(query),
             counter.num,
