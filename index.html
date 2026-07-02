@@ -170,7 +170,6 @@
 
         .mascot {
           display: none;
-          visibility: hidden;
         }
       }
 
@@ -184,6 +183,10 @@
           border-radius: 0;
           z-index: -1;
           display: none;
+        }
+
+        .mascot.loaded {
+          display: block;
         }
       }
 
@@ -353,11 +356,13 @@
       themeSelect.addEventListener("change", set);
 
       const randomMascot = mascots[Math.floor(Math.random() * mascots.length)];
+      const mascot = document.querySelector(".mascot");
 
-      document.querySelector(".mascot").src = randomMascot.image;
-      document.querySelector(".mascot").alt = randomMascot.name;
-      document.querySelector(".mascot").title = randomMascot.name;
-      document.querySelector(".mascot").style.display = "block";
+      mascot.src = randomMascot.image;
+      mascot.alt = randomMascot.name;
+      mascot.title = randomMascot.name;
+
+      mascot.classList.add("loaded");
     </script>
   </body>
 </html>
