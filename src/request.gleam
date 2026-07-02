@@ -57,7 +57,7 @@ pub fn handle(request, connection, index_html) {
             query_padding(query),
           ))
         }
-        Error(_) -> wisp.unprocessable_entity()
+        Error(_) -> wisp.internal_server_error()
       }
     }
     ["record", "@" <> name] if name == "" -> wisp.bad_request()
@@ -76,7 +76,7 @@ pub fn handle(request, connection, index_html) {
             200,
           )
         }
-        Error(_) -> wisp.unprocessable_entity()
+        Error(_) -> wisp.internal_server_error()
       }
     }
     _ -> wisp.redirect("https://github.com/Fuwn/mayu")
