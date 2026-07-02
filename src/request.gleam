@@ -3,6 +3,7 @@ import gleam/int
 import gleam/json
 import gleam/list
 import gleam/result
+import gleam/string
 import gleam/string_builder
 import svg
 import wisp
@@ -13,12 +14,21 @@ const default_padding = 6
 
 const max_padding = 12
 
+const max_name_length = 64
+
 fn middleware(request, handle) {
   use <- wisp.log_request(request)
   use <- wisp.rescue_crashes
   use request <- wisp.handle_head(request)
 
   handle(request)
+}
+
+fn require_valid_name(name, continue) {
+  case name != "" && string.length(name) <= max_name_length {
+    True -> continue()
+    False -> wisp.bad_request()
+  }
 }
 
 fn query_theme(query) -> String {
@@ -39,8 +49,9 @@ pub fn handle(request, connection, index_html) {
     [] -> wisp.html_response(string_builder.from_string(index_html), 200)
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)
-    ["get", "@" <> name] if name == "" -> wisp.bad_request()
     ["get", "@" <> name] -> {
+      use <- require_valid_name(name)
+
       case database.get_counter(connection, name) {
         Ok(counter) -> {
           let query = wisp.get_query(request)
@@ -60,8 +71,9 @@ pub fn handle(request, connection, index_html) {
         Error(_) -> wisp.internal_server_error()
       }
     }
-    ["record", "@" <> name] if name == "" -> wisp.bad_request()
     ["record", "@" <> name] -> {
+      use <- require_valid_name(name)
+
       case database.get_counter(connection, name) {
         Ok(counter) -> {
           wisp.json_response(
