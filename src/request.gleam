@@ -14,8 +14,6 @@ const default_padding = 6
 const max_padding = 12
 
 fn middleware(request, handle) {
-  let request = wisp.method_override(request)
-
   use <- wisp.log_request(request)
   use <- wisp.rescue_crashes
   use request <- wisp.handle_head(request)
