@@ -117,26 +117,20 @@ fn parse_glyph_filename(file) {
 }
 
 fn load_cached_image(path) {
-  case simplifile.read_bits(from: path) {
-    Ok(image_data) ->
-      case image.get_image_information(image_data) {
-        Ok(info) ->
-          Ok(CachedImage(
-            base64: bit_array.base64_encode(image_data, True),
-            info: info,
-          ))
-        Error(_) -> {
-          wisp.log_error("Error getting image information for " <> path)
-
-          Error(Nil)
-        }
-      }
-    Error(_) -> {
+  use image_data <- result.try(
+    simplifile.read_bits(from: path)
+    |> result.map_error(fn(_) {
       wisp.log_error("Error reading image file " <> path)
+    }),
+  )
+  use info <- result.map(
+    image.get_image_information(image_data)
+    |> result.map_error(fn(_) {
+      wisp.log_error("Error getting image information for " <> path)
+    }),
+  )
 
-      Error(Nil)
-    }
-  }
+  CachedImage(base64: bit_array.base64_encode(image_data, True), info: info)
 }
 
 pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
