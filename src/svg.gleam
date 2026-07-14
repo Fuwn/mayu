@@ -9,17 +9,21 @@ type XmlImages {
   XmlImages(xml: StringBuilder, width: Int, height: Int)
 }
 
+// The base64 payload is appended on its own so the builder keeps it as a
+// separate iodata segment instead of copying it into one large binary.
 fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
   svgs
-  |> string_builder.append("<image height=\"")
-  |> string_builder.append(int.to_string(image.height))
-  |> string_builder.append("\" width=\"")
-  |> string_builder.append(int.to_string(image.width))
-  |> string_builder.append("\" x=\"")
-  |> string_builder.append(int.to_string(x_offset))
-  |> string_builder.append("\" y=\"0\" xlink:href=\"data:image/")
-  |> string_builder.append(image.extension)
-  |> string_builder.append(";base64,")
+  |> string_builder.append(
+    "<image height=\""
+    <> int.to_string(image.height)
+    <> "\" width=\""
+    <> int.to_string(image.width)
+    <> "\" x=\""
+    <> int.to_string(x_offset)
+    <> "\" y=\"0\" xlink:href=\"data:image/"
+    <> image.extension
+    <> ";base64,",
+  )
   |> string_builder.append(base64)
   |> string_builder.append("\"/>")
 }
@@ -71,17 +75,12 @@ pub fn xml(theme, fallback_theme, number, padding) {
   }
   let rendered_images = images(image_cache, theme, glyphs(number, padding))
 
-  string_builder.new()
-  |> string_builder.append(
-    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><svg height=\"",
-  )
-  |> string_builder.append(int.to_string(rendered_images.height))
-  |> string_builder.append(
-    "\" style=\"image-rendering: pixelated;\" version=\"1.1\" width=\"",
-  )
-  |> string_builder.append(int.to_string(rendered_images.width))
-  |> string_builder.append(
-    "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
+  string_builder.from_string(
+    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><svg height=\""
+    <> int.to_string(rendered_images.height)
+    <> "\" style=\"image-rendering: pixelated;\" version=\"1.1\" width=\""
+    <> int.to_string(rendered_images.width)
+    <> "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
   )
   |> string_builder.append_builder(rendered_images.xml)
   |> string_builder.append("</g></svg>")
