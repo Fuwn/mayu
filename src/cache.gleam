@@ -38,14 +38,7 @@ pub fn load_themes() {
     Error(_) -> []
   }
 
-  let themes = case simplifile.read_directory("./themes") {
-    Ok(files) -> files
-    Error(_) -> {
-      wisp.log_error("Error reading themes directory")
-
-      []
-    }
-  }
+  let themes = read_directory_or_empty("./themes")
 
   let selected_themes = case enabled_themes {
     [] -> themes
@@ -57,17 +50,20 @@ pub fn load_themes() {
   |> dict.from_list
 }
 
-fn load_theme(theme) -> Dict(Glyph, CachedImage) {
-  let theme_directory = "./themes/" <> theme
-  let files = case simplifile.read_directory(theme_directory) {
+fn read_directory_or_empty(path) -> List(String) {
+  case simplifile.read_directory(path) {
     Ok(files) -> files
     Error(_) -> {
-      wisp.log_error("Error reading theme directory " <> theme_directory)
+      wisp.log_error("Error reading directory " <> path)
 
       []
     }
   }
+}
 
+fn load_theme(theme) -> Dict(Glyph, CachedImage) {
+  let theme_directory = "./themes/" <> theme
+  let files = read_directory_or_empty(theme_directory)
   let glyphs =
     files
     |> list.filter_map(fn(file) {
