@@ -53,12 +53,8 @@ fn images(image_cache, theme, glyphs) -> XmlImages {
 
 fn pad_digits(number, padding) -> List(Int) {
   let assert Ok(digits) = int.digits(int.absolute_value(number), 10)
-  let digits_padding = padding - list.length(digits)
 
-  case digits_padding > 0 {
-    True -> list.append(list.repeat(0, digits_padding), digits)
-    False -> digits
-  }
+  list.append(list.repeat(0, padding - list.length(digits)), digits)
 }
 
 fn glyphs(number, padding) {

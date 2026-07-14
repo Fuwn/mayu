@@ -1,6 +1,7 @@
 import cache
 import database
 import envoy
+import gleam/dict
 import gleam/erlang/process
 import gleam/int
 import gleam/list
@@ -77,13 +78,12 @@ fn start_pruner(connection) -> Nil {
 
       wisp.log_info("Counter pruning enabled")
     }
-    Error(_) -> {
-      let any_variable_set =
+    Error(_) ->
+      case
         list.any(prune_variable_names, fn(name) {
           result.is_ok(envoy.get(name))
         })
-
-      case any_variable_set {
+      {
         True ->
           wisp.log_warning(
             "Counter pruning disabled: set all three MAYU_PRUNE_* variables"
@@ -91,7 +91,6 @@ fn start_pruner(connection) -> Nil {
           )
         False -> Nil
       }
-    }
   }
 }
 
@@ -139,7 +138,7 @@ fn positive_env_int(name) -> Result(Int, Nil) {
 
 fn theme_options(image_cache, default_theme) {
   image_cache
-  |> cache.theme_names
+  |> dict.keys
   |> list.filter(fn(slug) { !string.ends_with(slug, "-h") })
   |> list.sort(string.compare)
   |> list.map(fn(slug) { theme_option(slug, default_theme) })

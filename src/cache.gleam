@@ -29,14 +29,12 @@ pub fn store(cache: ThemeCache) -> Nil
 pub fn read() -> ThemeCache
 
 pub fn load_themes() {
-  let enabled_themes = case envoy.get("MAYU_THEMES") {
-    Ok(value) ->
-      value
-      |> string.split(",")
-      |> list.map(string.trim)
-      |> list.filter(fn(name) { name != "" })
-    Error(_) -> []
-  }
+  let enabled_themes =
+    envoy.get("MAYU_THEMES")
+    |> result.unwrap("")
+    |> string.split(",")
+    |> list.map(string.trim)
+    |> list.filter(fn(name) { name != "" })
 
   let themes = read_directory_or_empty("./themes")
 
@@ -132,10 +130,6 @@ fn load_cached_image(path) {
 pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
   dict.get(cache, theme)
   |> result.then(fn(theme_images) { dict.get(theme_images, glyph) })
-}
-
-pub fn theme_names(cache) {
-  dict.keys(cache)
 }
 
 const preferred_default_theme = "asoul"
