@@ -63,38 +63,40 @@ fn existing_columns(connection) -> List(String) {
 pub fn get_counter(connection, name) {
   case name {
     "demo" -> Ok(Counter("demo", 1_234_567_890, "", ""))
-    _ -> {
-      case
-        sqlight.query(
-          "INSERT INTO tb_count (name, created_at, updated_at, num)
-           VALUES (?1, datetime('now'), datetime('now'), 1)
-           ON CONFLICT(name) DO UPDATE SET
-             num = tb_count.num + 1,
-             updated_at = datetime('now')
-           RETURNING name, num, created_at, updated_at;",
-          with: [sqlight.text(name)],
-          on: connection,
-          expecting: dynamic.tuple4(
-            dynamic.string,
-            dynamic.int,
-            dynamic.optional(dynamic.string),
-            dynamic.optional(dynamic.string),
-          ),
-        )
-      {
-        Ok([row]) ->
-          Ok(Counter(
-            row.0,
-            row.1,
-            option.unwrap(row.2, ""),
-            option.unwrap(row.3, ""),
-          ))
-        _ -> {
-          wisp.log_error("Database query failed or returned unexpected rows.")
+    _ -> increment_counter(connection, name)
+  }
+}
 
-          Error("Database operation failed")
-        }
-      }
+fn increment_counter(connection, name) {
+  case
+    sqlight.query(
+      "INSERT INTO tb_count (name, created_at, updated_at, num)
+       VALUES (?1, datetime('now'), datetime('now'), 1)
+       ON CONFLICT(name) DO UPDATE SET
+         num = tb_count.num + 1,
+         updated_at = datetime('now')
+       RETURNING name, num, created_at, updated_at;",
+      with: [sqlight.text(name)],
+      on: connection,
+      expecting: dynamic.tuple4(
+        dynamic.string,
+        dynamic.int,
+        dynamic.optional(dynamic.string),
+        dynamic.optional(dynamic.string),
+      ),
+    )
+  {
+    Ok([row]) ->
+      Ok(Counter(
+        row.0,
+        row.1,
+        option.unwrap(row.2, ""),
+        option.unwrap(row.3, ""),
+      ))
+    _ -> {
+      wisp.log_error("Database query failed or returned unexpected rows.")
+
+      Error("Database operation failed")
     }
   }
 }
