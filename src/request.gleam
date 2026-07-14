@@ -29,6 +29,15 @@ fn require_valid_name(name, continue) {
   }
 }
 
+fn with_counter(connection, name, respond) {
+  use <- require_valid_name(name)
+
+  case database.get_counter(connection, name) {
+    Ok(counter) -> respond(counter)
+    Error(_) -> wisp.internal_server_error()
+  }
+}
+
 fn query_theme(query, default_theme) -> String {
   list.key_find(query, "theme") |> result.unwrap(default_theme)
 }
@@ -48,47 +57,37 @@ pub fn handle(request, connection, index_html, default_theme) {
     ["heart-beat"] ->
       wisp.html_response(string_builder.from_string("alive"), 200)
     ["get", "@" <> name] -> {
-      use <- require_valid_name(name)
+      use counter <- with_counter(connection, name)
 
-      case database.get_counter(connection, name) {
-        Ok(counter) -> {
-          let query = wisp.get_query(request)
+      let query = wisp.get_query(request)
 
-          wisp.ok()
-          |> wisp.set_header("Content-Type", "image/svg+xml")
-          |> wisp.set_header(
-            "Cache-Control",
-            "max-age=0, no-cache, no-store, must-revalidate",
-          )
-          |> wisp.string_builder_body(svg.xml(
-            query_theme(query, default_theme),
-            default_theme,
-            counter.num,
-            query_padding(query),
-          ))
-        }
-        Error(_) -> wisp.internal_server_error()
-      }
+      wisp.ok()
+      |> wisp.set_header("Content-Type", "image/svg+xml")
+      |> wisp.set_header(
+        "Cache-Control",
+        "max-age=0, no-cache, no-store, must-revalidate",
+      )
+      |> wisp.string_builder_body(svg.xml(
+        query_theme(query, default_theme),
+        default_theme,
+        counter.num,
+        query_padding(query),
+      ))
     }
     ["record", "@" <> name] -> {
-      use <- require_valid_name(name)
+      use counter <- with_counter(connection, name)
 
-      case database.get_counter(connection, name) {
-        Ok(counter) -> {
-          wisp.json_response(
-            json.to_string_builder(
-              json.object([
-                #("name", json.string(counter.name)),
-                #("num", json.int(counter.num)),
-                #("updated_at", json.string(counter.updated_at)),
-                #("created_at", json.string(counter.created_at)),
-              ]),
-            ),
-            200,
-          )
-        }
-        Error(_) -> wisp.internal_server_error()
-      }
+      wisp.json_response(
+        json.to_string_builder(
+          json.object([
+            #("name", json.string(counter.name)),
+            #("num", json.int(counter.num)),
+            #("updated_at", json.string(counter.updated_at)),
+            #("created_at", json.string(counter.created_at)),
+          ]),
+        ),
+        200,
+      )
     }
     _ -> wisp.redirect("https://github.com/Fuwn/mayu")
   }
