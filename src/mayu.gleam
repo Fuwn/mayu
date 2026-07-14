@@ -165,13 +165,6 @@ fn prettify_slug(slug) {
   slug
   |> string.replace("_", "-")
   |> string.split(on: "-")
-  |> list.map(capitalize)
+  |> list.map(string.capitalise)
   |> string.join(" ")
-}
-
-fn capitalize(word) {
-  case string.pop_grapheme(word) {
-    Ok(#(first, rest)) -> string.uppercase(first) <> rest
-    Error(_) -> word
-  }
 }
