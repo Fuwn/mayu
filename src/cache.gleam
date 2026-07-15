@@ -129,7 +129,7 @@ fn load_cached_image(path) {
 
 pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
   dict.get(cache, theme)
-  |> result.then(fn(theme_images) { dict.get(theme_images, glyph) })
+  |> result.try(fn(theme_images) { dict.get(theme_images, glyph) })
 }
 
 const preferred_default_theme = "asoul"
