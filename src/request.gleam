@@ -44,7 +44,7 @@ fn query_theme(query, default_theme) -> String {
 
 fn query_padding(query) -> Int {
   list.key_find(query, "padding")
-  |> result.then(int.parse)
+  |> result.try(int.parse)
   |> result.map(int.clamp(_, min: 0, max: max_padding))
   |> result.unwrap(default_padding)
 }
