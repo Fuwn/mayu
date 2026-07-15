@@ -31,10 +31,10 @@ pub fn main() {
   cache.store(image_cache)
 
   let default_theme = cache.default_theme(image_cache)
-  let version_tag = case envoy.get("MAYU_VERSION") {
-    Ok(version) -> "(v" <> version <> ")"
-    Error(_) -> ""
-  }
+  let version_tag =
+    envoy.get("MAYU_VERSION")
+    |> result.map(fn(version) { "(v" <> version <> ")" })
+    |> result.unwrap("")
   let assert Ok(index_html_source) = simplifile.read("index.html")
   let index_html =
     index_html_source
