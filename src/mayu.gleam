@@ -146,15 +146,13 @@ fn theme_options(image_cache, default_theme) {
 }
 
 fn theme_option(slug, default_theme) {
-  let selected = case slug == default_theme {
-    True -> " selected"
-    False -> ""
-  }
-
   "<option value=\""
   <> slug
   <> "\""
-  <> selected
+  <> case slug == default_theme {
+    True -> " selected"
+    False -> ""
+  }
   <> ">"
   <> prettify_slug(slug)
   <> "</option>"
