@@ -1,11 +1,25 @@
 # syntax=docker/dockerfile:1.7
 
-FROM ghcr.io/gleam-lang/gleam:v1.17.0-erlang-alpine AS build
+# The official Gleam images pair Gleam >= 1.14 only with OTP 28+, which
+# crashes under Rosetta emulation during multi-arch builds, so the Gleam
+# binary is installed onto an OTP 27 base instead.
+FROM erlang:27-alpine AS build
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
+ARG TARGETARCH
+ARG GLEAM_VERSION=v1.17.0
+
 # hadolint ignore=DL3018
-RUN apk add --no-cache build-base git rsync bash
+RUN apk add --no-cache build-base curl git rsync bash
+
+RUN case "$TARGETARCH" in \
+      amd64) triple=x86_64-unknown-linux-musl ;; \
+      arm64) triple=aarch64-unknown-linux-musl ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2 && exit 1 ;; \
+    esac \
+    && curl -fsSL "https://github.com/gleam-lang/gleam/releases/download/${GLEAM_VERSION}/gleam-${GLEAM_VERSION}-${triple}.tar.gz" \
+    | tar -xzC /usr/local/bin gleam
 
 WORKDIR /mayu
 
@@ -23,7 +37,7 @@ WORKDIR /mayu/build
 
 RUN gleam export erlang-shipment
 
-FROM ghcr.io/gleam-lang/gleam:v1.17.0-erlang-alpine
+FROM erlang:27-alpine
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
