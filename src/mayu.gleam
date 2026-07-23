@@ -50,6 +50,10 @@ pub fn main() {
   database.setup(connection)
   start_pruner(connection)
 
+  let port =
+    envoy.get("PORT")
+    |> result.try(int.parse)
+    |> result.unwrap(3000)
   let secret_key_base = wisp.random_string(64)
   let assert Ok(_) =
     wisp.mist_handler(
@@ -59,7 +63,7 @@ pub fn main() {
       secret_key_base,
     )
     |> mist.new
-    |> mist.port(3000)
+    |> mist.port(port)
     |> mist.start_http
 
   process.sleep_forever()
