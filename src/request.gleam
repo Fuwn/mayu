@@ -1,10 +1,10 @@
 import database
+import gleam/http/response
 import gleam/int
 import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
-import gleam/string_builder
 import svg
 import wisp
 
@@ -25,7 +25,7 @@ fn middleware(request, handle) {
 fn require_valid_name(name, continue) {
   case name != "" && string.length(name) <= max_name_length {
     True -> continue()
-    False -> wisp.bad_request()
+    False -> wisp.bad_request("")
   }
 }
 
@@ -53,21 +53,20 @@ pub fn handle(request, connection, index_html, default_theme) {
   use _ <- middleware(request)
 
   case wisp.path_segments(request) {
-    [] -> wisp.html_response(string_builder.from_string(index_html), 200)
-    ["heart-beat"] ->
-      wisp.html_response(string_builder.from_string("alive"), 200)
+    [] -> wisp.html_response(index_html, 200)
+    ["heart-beat"] -> wisp.html_response("alive", 200)
     ["get", "@" <> name] -> {
       use counter <- with_counter(connection, name)
 
       let query = wisp.get_query(request)
 
       wisp.ok()
-      |> wisp.set_header("Content-Type", "image/svg+xml")
-      |> wisp.set_header(
+      |> response.set_header("Content-Type", "image/svg+xml")
+      |> response.set_header(
         "Cache-Control",
         "max-age=0, no-cache, no-store, must-revalidate",
       )
-      |> wisp.string_builder_body(svg.xml(
+      |> wisp.string_tree_body(svg.xml(
         query_theme(query, default_theme),
         default_theme,
         counter.num,
@@ -78,7 +77,7 @@ pub fn handle(request, connection, index_html, default_theme) {
       use counter <- with_counter(connection, name)
 
       wisp.json_response(
-        json.to_string_builder(
+        json.to_string(
           json.object([
             #("name", json.string(counter.name)),
             #("num", json.int(counter.num)),

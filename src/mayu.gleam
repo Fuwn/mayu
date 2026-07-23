@@ -8,24 +8,16 @@ import gleam/list
 import gleam/result
 import gleam/string
 import mist
+import pog
 import request
 import simplifile
 import sqlight
 import wisp
+import wisp/wisp_mist
 
 pub fn main() {
   wisp.configure_logger()
 
-  case simplifile.create_directory("./data") {
-    Ok(_) | Error(simplifile.Eexist) -> Nil
-    Error(error) -> {
-      wisp.log_error(
-        "Failed to create ./data directory: "
-        <> simplifile.describe_error(error),
-      )
-      panic as "cannot create data directory"
-    }
-  }
   let image_cache = cache.load_themes()
 
   cache.store(image_cache)
@@ -45,7 +37,7 @@ pub fn main() {
       theme_options(image_cache, default_theme),
     )
 
-  use connection <- sqlight.with_connection("./data/count.db")
+  use connection <- with_database()
 
   database.setup(connection)
   start_pruner(connection)
@@ -56,7 +48,7 @@ pub fn main() {
     |> result.unwrap(3000)
   let secret_key_base = wisp.random_string(64)
   let assert Ok(_) =
-    wisp.mist_handler(
+    wisp_mist.handler(
       fn(incoming_request) {
         request.handle(incoming_request, connection, index_html, default_theme)
       },
@@ -64,21 +56,68 @@ pub fn main() {
     )
     |> mist.new
     |> mist.port(port)
-    |> mist.start_http
+    |> mist.start
 
   process.sleep_forever()
+}
+
+// A postgres:// URL in MAYU_DATABASE_URL selects Postgres; otherwise the
+// counter lives in the local SQLite file.
+fn with_database(continue: fn(database.Database) -> a) -> a {
+  case envoy.get("MAYU_DATABASE_URL") {
+    Ok(url) -> {
+      let pool_name = process.new_name("mayu_database")
+
+      case pog.url_config(pool_name, url) {
+        Ok(config) -> {
+          // Under saturation a hit counter should queue briefly rather than
+          // shed requests, so the checkout target is generous.
+          let config =
+            config
+            |> pog.pool_size(25)
+            |> pog.queue_target(250)
+          let assert Ok(pool) = pog.start(config)
+
+          continue(database.Postgres(pool.data))
+        }
+        Error(_) -> {
+          wisp.log_error(
+            "Invalid MAYU_DATABASE_URL: expected a postgres:// URL",
+          )
+          panic as "invalid database url"
+        }
+      }
+    }
+    Error(_) -> {
+      ensure_data_directory()
+
+      use connection <- sqlight.with_connection("./data/count.db")
+
+      continue(database.Sqlite(connection))
+    }
+  }
+}
+
+fn ensure_data_directory() -> Nil {
+  case simplifile.create_directory("./data") {
+    Ok(_) | Error(simplifile.Eexist) -> Nil
+    Error(error) -> {
+      wisp.log_error(
+        "Failed to create ./data directory: "
+        <> simplifile.describe_error(error),
+      )
+      panic as "cannot create data directory"
+    }
+  }
 }
 
 fn start_pruner(connection) -> Nil {
   case prune_config() {
     Ok(#(min_count, max_age_days, interval_hours)) -> {
       let _ =
-        process.start(
-          fn() {
-            prune_loop(connection, min_count, max_age_days, interval_hours)
-          },
-          False,
-        )
+        process.spawn_unlinked(fn() {
+          prune_loop(connection, min_count, max_age_days, interval_hours)
+        })
 
       wisp.log_info("Counter pruning enabled")
     }

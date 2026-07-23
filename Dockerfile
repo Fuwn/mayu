@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine AS build
+FROM ghcr.io/gleam-lang/gleam:v1.17.0-erlang-alpine AS build
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
@@ -23,7 +23,7 @@ WORKDIR /mayu/build
 
 RUN gleam export erlang-shipment
 
-FROM ghcr.io/gleam-lang/gleam:v1.10.0-erlang-alpine
+FROM ghcr.io/gleam-lang/gleam:v1.17.0-erlang-alpine
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 

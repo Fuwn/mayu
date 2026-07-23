@@ -1,5 +1,5 @@
 import database
-import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/list
 import gleeunit
 import gleeunit/should
@@ -9,10 +9,38 @@ pub fn main() {
   gleeunit.main()
 }
 
+pub fn setup_migrates_legacy_moe_counter_table_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  let assert Ok(_) =
+    sqlight.exec(
+      "create table tb_count (
+        id integer primary key autoincrement not null unique,
+        name text not null unique,
+        num int not null default (0)
+      ) strict;",
+      connection,
+    )
+  let assert Ok(_) =
+    sqlight.exec(
+      "insert into tb_count (name, num) values ('legacy', 41);",
+      connection,
+    )
+
+  database.setup(database.Sqlite(connection))
+
+  let assert Ok(counter) =
+    database.get_counter(database.Sqlite(connection), "legacy")
+
+  counter.num |> should.equal(42)
+  counter.created_at |> should.equal("")
+  counter.updated_at |> should.not_equal("")
+}
+
 pub fn prune_removes_only_idle_low_count_test() {
   use connection <- sqlight.with_connection(":memory:")
 
-  database.setup(connection)
+  database.setup(database.Sqlite(connection))
 
   let assert Ok(_) =
     sqlight.exec(
@@ -24,7 +52,7 @@ pub fn prune_removes_only_idle_low_count_test() {
       connection,
     )
 
-  database.prune(connection, 10, 30)
+  database.prune(database.Sqlite(connection), 10, 30)
 
   let remaining = remaining_names(connection)
 
@@ -40,7 +68,11 @@ fn remaining_names(connection) -> List(String) {
       "select name from tb_count order by name;",
       on: connection,
       with: [],
-      expecting: dynamic.element(0, dynamic.string),
+      expecting: {
+        use name <- decode.field(0, decode.string)
+
+        decode.success(name)
+      },
     )
 
   names

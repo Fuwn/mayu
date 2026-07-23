@@ -81,8 +81,13 @@ fn load_theme(theme) -> Dict(Glyph, CachedImage) {
 
 fn warn_if_incomplete(theme, glyphs) -> Nil {
   let missing =
-    list.range(0, 9)
-    |> list.filter(fn(digit) { !dict.has_key(glyphs, Digit(digit)) })
+    int.range(from: 0, to: 10, with: [], run: fn(missing, digit) {
+      case dict.has_key(glyphs, Digit(digit)) {
+        True -> missing
+        False -> [digit, ..missing]
+      }
+    })
+    |> list.reverse
 
   case missing {
     [] -> Nil
