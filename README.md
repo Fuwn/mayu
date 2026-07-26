@@ -5,7 +5,8 @@
 Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Moe-Counter), designed
 to be lightweight and easy to use.
 
-Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.org) as its database.
+Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.org) or
+[PostgreSQL](https://www.postgresql.org) as its database.
 
 <br>
 
@@ -47,11 +48,15 @@ $ nix run
 docker run --volume 'mayu:/mayu/data/' -p '80:3000' --rm fuwn/mayu:latest
 ```
 
-This Docker command uses a named volume, `mayu`, which allows Mayu's database to persist between container restarts.
+This Docker command uses a named volume, `mayu`, which allows Mayu's database to persist between container restarts. The volume is unnecessary with PostgreSQL, since the data lives in the database server.
+
+Mayu listens on port `3000` unless `PORT` is set, and binds every interface over both IPv4 and IPv6.
 
 ### Database
 
 Mayu will use SQLite by default and will place the database file, `count.db`, within the `data/` directory of the project's root directory.
+
+Set `MAYU_DATABASE_URL` to a `postgres://` or `postgresql://` URL to use PostgreSQL instead, e.g. `postgres://mayu:secret@localhost:5432/mayu`. Add `?sslmode=require` if your provider requires TLS. Mayu creates its table on start-up, so an empty database is all it needs, and the `data/` directory goes unused.
 
 Mayu has the same default database layout as Moe-Counter, so if you've already used Moe-Counter previously, Mayu will work off of any previously accumulated counter data, so long as you transfer the database file over.
 
@@ -63,6 +68,8 @@ Mayu is configured through environment variables, all of which are optional.
 
 | Variable | Description |
 | --- | --- |
+| `PORT` | Port the server listens on. Defaults to `3000`. |
+| `MAYU_DATABASE_URL` | A `postgres://` or `postgresql://` URL, e.g. `postgres://mayu:secret@localhost:5432/mayu`. When unset, Mayu uses the SQLite file at `data/count.db`. |
 | `MAYU_THEMES` | Comma-separated allowlist of themes to load, e.g. `asoul,garukura`. When unset, every theme is loaded. Restricting it lowers memory use and caps the maximum response size. |
 | `MAYU_VERSION` | Version string shown on the index page. Set automatically by the Docker image. |
 | `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
