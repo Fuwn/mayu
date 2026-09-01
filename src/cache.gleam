@@ -169,6 +169,7 @@ pub fn default_theme(cache) -> String {
       names
       |> list.filter(fn(name) { !string.ends_with(name, "-h") })
       |> list.first
+      |> result.or(list.first(names))
       |> result.unwrap(preferred_default_theme)
   }
 }

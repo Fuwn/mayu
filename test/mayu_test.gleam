@@ -135,3 +135,9 @@ pub fn xml_renders_nothing_for_a_theme_missing_from_every_cache_test() {
   |> string.contains("<image")
   |> should.be_false
 }
+
+pub fn default_theme_prefers_a_loaded_theme_over_the_preferred_name_test() {
+  theme_cache("gelbooru-h", digit_glyphs)
+  |> cache.default_theme
+  |> should.equal("gelbooru-h")
+}
