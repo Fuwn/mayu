@@ -49,7 +49,12 @@ COPY index.html ./
 COPY gleam.toml ./
 
 RUN grep '^version' gleam.toml | cut -d '"' -f 2 > .mayu-version \
-    && rm gleam.toml
+    && rm gleam.toml \
+    && adduser -D -H mayu \
+    && mkdir data \
+    && chown mayu /mayu/data
+
+USER mayu
 
 ENTRYPOINT ["sh", "-c", "exec env MAYU_VERSION=\"$(cat /mayu/.mayu-version)\" /mayu/erlang-shipment/entrypoint.sh \"$@\"", "--"]
 
