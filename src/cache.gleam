@@ -49,61 +49,62 @@ pub fn load_themes() {
   }
 
   selected_themes
-  |> list.map(fn(theme) { #(theme, load_theme(theme)) })
+  |> list.filter_map(fn(theme) {
+    let glyphs = load_theme(theme)
+
+    case dict.is_empty(glyphs), missing_digits(glyphs) {
+      True, _ -> {
+        wisp.log_error("Ignoring " <> theme <> ": no glyphs found")
+
+        Error(Nil)
+      }
+      False, [] -> Ok(#(theme, glyphs))
+      False, missing -> {
+        wisp.log_warning(
+          "Theme "
+          <> theme
+          <> " is missing digit glyphs: "
+          <> { missing |> list.map(int.to_string) |> string.join(", ") },
+        )
+
+        Ok(#(theme, glyphs))
+      }
+    }
+  })
   |> dict.from_list
 }
 
 fn read_directory_or_empty(path) -> List(String) {
   case simplifile.read_directory(path) {
     Ok(files) -> files
-    Error(_) -> {
-      wisp.log_error("Error reading directory " <> path)
-
-      []
-    }
+    Error(_) -> []
   }
 }
 
 fn load_theme(theme) -> Dict(Glyph, CachedImage) {
   let theme_directory = "./themes/" <> theme
-  let files = read_directory_or_empty(theme_directory)
-  let glyphs =
-    files
-    |> list.filter_map(fn(file) {
-      use glyph <- result.try(parse_glyph_filename(file))
-      use cached_image <- result.try(load_cached_image(
-        theme_directory <> "/" <> file,
-      ))
 
-      Ok(#(glyph, cached_image))
-    })
-    |> dict.from_list
+  theme_directory
+  |> read_directory_or_empty
+  |> list.filter_map(fn(file) {
+    use glyph <- result.try(parse_glyph_filename(file))
+    use cached_image <- result.try(load_cached_image(
+      theme_directory <> "/" <> file,
+    ))
 
-  warn_if_incomplete(theme, glyphs)
-
-  glyphs
+    Ok(#(glyph, cached_image))
+  })
+  |> dict.from_list
 }
 
-fn warn_if_incomplete(theme, glyphs) -> Nil {
-  let missing =
-    int.range(from: 0, to: 10, with: [], run: fn(missing, digit) {
-      case dict.has_key(glyphs, Digit(digit)) {
-        True -> missing
-        False -> [digit, ..missing]
-      }
-    })
-    |> list.reverse
-
-  case missing {
-    [] -> Nil
-    _ ->
-      wisp.log_warning(
-        "Theme "
-        <> theme
-        <> " is missing digit glyphs: "
-        <> { missing |> list.map(int.to_string) |> string.join(", ") },
-      )
-  }
+fn missing_digits(glyphs) -> List(Int) {
+  int.range(from: 0, to: 10, with: [], run: fn(missing, digit) {
+    case dict.has_key(glyphs, Digit(digit)) {
+      True -> missing
+      False -> [digit, ..missing]
+    }
+  })
+  |> list.reverse
 }
 
 fn parse_glyph_filename(file) {
