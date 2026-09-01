@@ -1,49 +1,32 @@
 import cache
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
+import gleam/result
 import gleam/string
 import gleam/string_tree.{type StringTree}
-import image
 
 type XmlImages {
   XmlImages(xml: StringTree, width: Int, height: Int)
 }
 
-// The base64 payload is appended on its own so the builder keeps it as a
-// separate iodata segment instead of copying it into one large binary.
-fn append_image(svgs, base64, image: image.ImageInformation, x_offset) {
+fn append_image(svgs, cached_image: cache.CachedImage, x_offset) {
   svgs
-  |> string_tree.append(
-    "<image height=\""
-    <> int.to_string(image.height)
-    <> "\" width=\""
-    <> int.to_string(image.width)
-    <> "\" x=\""
-    <> int.to_string(x_offset)
-    <> "\" y=\"0\" xlink:href=\"data:image/"
-    <> image.extension
-    <> ";base64,",
-  )
-  |> string_tree.append(base64)
-  |> string_tree.append("\"/>")
+  |> string_tree.append(cached_image.element_prefix)
+  |> string_tree.append(int.to_string(x_offset))
+  |> string_tree.append(cached_image.element_suffix)
 }
 
-fn images(image_cache, theme, glyphs) -> XmlImages {
+fn images(glyph_images, glyphs) -> XmlImages {
   list.fold(glyphs, XmlImages(string_tree.new(), 0, 0), fn(accumulator, glyph) {
-    case cache.get_image(image_cache, theme, glyph) {
+    case dict.get(glyph_images, glyph) {
       Ok(cached_image) ->
         XmlImages(
-          append_image(
-            accumulator.xml,
-            cached_image.base64,
-            cached_image.info,
-            accumulator.width,
-          ),
-          accumulator.width + cached_image.info.width,
-          int.max(accumulator.height, cached_image.info.height),
+          append_image(accumulator.xml, cached_image, accumulator.width),
+          accumulator.width + cached_image.width,
+          int.max(accumulator.height, cached_image.height),
         )
-      _ -> accumulator
+      Error(_) -> accumulator
     }
   })
 }
@@ -63,13 +46,21 @@ fn glyphs(number, padding) {
   [cache.Start, ..list.append(digits, [cache.End])]
 }
 
-pub fn xml(theme, fallback_theme, number, padding) {
-  let image_cache = cache.read()
-  let theme = case dict.has_key(image_cache, theme) {
-    True -> theme
-    False -> fallback_theme
+fn theme_images(
+  image_cache,
+  theme,
+  fallback_theme,
+) -> Dict(cache.Glyph, cache.CachedImage) {
+  case dict.get(image_cache, theme) {
+    Ok(glyph_images) -> glyph_images
+    Error(_) ->
+      dict.get(image_cache, fallback_theme) |> result.unwrap(dict.new())
   }
-  let rendered_images = images(image_cache, theme, glyphs(number, padding))
+}
+
+pub fn xml(theme, fallback_theme, number, padding) {
+  let glyph_images = theme_images(cache.read(), theme, fallback_theme)
+  let rendered_images = images(glyph_images, glyphs(number, padding))
 
   string_tree.from_string(
     "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><svg height=\""

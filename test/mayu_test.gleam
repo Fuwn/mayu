@@ -1,9 +1,14 @@
+import cache
 import database
+import gleam/dict
 import gleam/dynamic/decode
 import gleam/list
+import gleam/string
+import gleam/string_tree
 import gleeunit
 import gleeunit/should
 import sqlight
+import svg
 
 pub fn main() {
   gleeunit.main()
@@ -76,4 +81,57 @@ fn remaining_names(connection) -> List(String) {
     )
 
   names
+}
+
+fn theme_cache(theme, glyphs) {
+  dict.from_list([
+    #(
+      theme,
+      glyphs
+        |> list.map(fn(glyph) {
+          #(
+            glyph,
+            cache.CachedImage(
+              element_prefix: "<image x=\"",
+              element_suffix: "\"/>",
+              width: 10,
+              height: 20,
+            ),
+          )
+        })
+        |> dict.from_list,
+    ),
+  ])
+}
+
+const digit_glyphs = [
+  cache.Digit(0),
+  cache.Digit(1),
+  cache.Digit(2),
+  cache.Digit(3),
+  cache.Digit(4),
+  cache.Digit(5),
+  cache.Digit(6),
+  cache.Digit(7),
+  cache.Digit(8),
+  cache.Digit(9),
+]
+
+pub fn xml_falls_back_to_the_default_theme_test() {
+  cache.store(theme_cache("known", digit_glyphs))
+
+  let rendered =
+    svg.xml("does-not-exist", "known", 7, 3) |> string_tree.to_string
+
+  rendered |> string.contains("width=\"30\"") |> should.be_true
+  rendered |> string.contains("height=\"20\"") |> should.be_true
+}
+
+pub fn xml_renders_nothing_for_a_theme_missing_from_every_cache_test() {
+  cache.store(theme_cache("known", digit_glyphs))
+
+  svg.xml("does-not-exist", "also-missing", 7, 3)
+  |> string_tree.to_string
+  |> string.contains("<image")
+  |> should.be_false
 }

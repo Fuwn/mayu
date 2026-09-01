@@ -10,7 +10,12 @@ import simplifile
 import wisp
 
 pub type CachedImage {
-  CachedImage(base64: String, info: image.ImageInformation)
+  CachedImage(
+    element_prefix: String,
+    element_suffix: String,
+    width: Int,
+    height: Int,
+  )
 }
 
 pub type Glyph {
@@ -129,12 +134,24 @@ fn load_cached_image(path) {
     }),
   )
 
-  CachedImage(base64: bit_array.base64_encode(image_data, True), info: info)
+  cached_image(image_data, info)
 }
 
-pub fn get_image(cache, theme, glyph) -> Result(CachedImage, Nil) {
-  dict.get(cache, theme)
-  |> result.try(fn(theme_images) { dict.get(theme_images, glyph) })
+fn cached_image(image_data, info: image.ImageInformation) -> CachedImage {
+  CachedImage(
+    element_prefix: "<image height=\""
+      <> int.to_string(info.height)
+      <> "\" width=\""
+      <> int.to_string(info.width)
+      <> "\" x=\"",
+    element_suffix: "\" y=\"0\" xlink:href=\"data:image/"
+      <> info.extension
+      <> ";base64,"
+      <> bit_array.base64_encode(image_data, True)
+      <> "\"/>",
+    width: info.width,
+    height: info.height,
+  )
 }
 
 const preferred_default_theme = "asoul"
