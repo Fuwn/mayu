@@ -281,6 +281,10 @@
       const setCopyCodes = () => {
         copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
       };
+
+      // The server never decodes paths, so escaping more renames live counters.
+      const encodeNameForPath = (name) =>
+        name.replace(/#/g, "%23").replace(/\?/g, "%3F");
       const set = () => {
         if (idInput.value !== "") {
           inputValue = idInput.value;
@@ -299,7 +303,7 @@
           themeValue = themeSelect.value;
         }
 
-        image.src = `/get/@${inputValue}?theme=${themeValue}`;
+        image.src = `/get/@${encodeNameForPath(inputValue)}?theme=${encodeURIComponent(themeValue)}`;
 
         setCopyCodes();
       };
