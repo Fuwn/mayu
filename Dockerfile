@@ -33,8 +33,6 @@ COPY scripts/ ./scripts/
 
 RUN ./scripts/sync-themes.sh
 
-WORKDIR /mayu/build
-
 RUN gleam export erlang-shipment
 
 FROM erlang:27-alpine
