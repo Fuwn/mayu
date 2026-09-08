@@ -7,6 +7,19 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: mayu_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mayu_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
@@ -18,3 +31,27 @@ jobs:
       - run: gleam format --check src test
       - run: gleam check
       - run: gleam test
+      - run: gleam run -m postgres_test
+        env:
+          MAYU_TEST_DATABASE_URL: postgres://postgres@localhost:5432/mayu_test
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mayu:check .
+      - run: docker run -d --name mayu-check -p 127.0.0.1:3000:3000 mayu:check
+      - run: python3 test/http_smoke.py http://localhost:3000
+      - run: test "$(docker exec mayu-check id -u)" = 1000
+      - if: failure()
+        run: docker logs mayu-check
+      - if: always()
+        run: docker rm -f mayu-check
+  nix:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix build --no-link

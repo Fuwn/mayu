@@ -2,13 +2,18 @@ import cache
 import database
 import gleam/dict
 import gleam/dynamic/decode
+import gleam/http
+import gleam/http/response
+import gleam/json
 import gleam/list
 import gleam/string
 import gleam/string_tree
 import gleeunit
 import gleeunit/should
+import request
 import sqlight
 import svg
+import wisp/simulate
 
 pub fn main() {
   gleeunit.main()
@@ -92,7 +97,9 @@ fn theme_cache(theme, glyphs) {
           #(
             glyph,
             cache.CachedImage(
-              element_prefix: "<image x=\"",
+              element_prefix: "<image data-glyph=\""
+                <> string.inspect(glyph)
+                <> "\" x=\"",
               element_suffix: "\"/>",
               width: 10,
               height: 20,
@@ -140,4 +147,80 @@ pub fn default_theme_prefers_a_loaded_theme_over_the_preferred_name_test() {
   theme_cache("gelbooru-h", digit_glyphs)
   |> cache.default_theme
   |> should.equal("gelbooru-h")
+}
+
+pub fn request_counts_hits_and_preserves_encoded_names_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  database.setup(database.Sqlite(connection))
+  cache.store(theme_cache("known", digit_glyphs))
+
+  let image_response =
+    request.handle(
+      simulate.request(http.Get, "/get/@has%20space?padding=999"),
+      database.Sqlite(connection),
+      "index",
+      "known",
+    )
+  let record_response =
+    request.handle(
+      simulate.request(http.Get, "/record/@has%20space"),
+      database.Sqlite(connection),
+      "index",
+      "known",
+    )
+
+  image_response.status |> should.equal(200)
+  response.get_header(image_response, "Cache-Control")
+  |> should.equal(Ok("max-age=0, no-cache, no-store, must-revalidate"))
+  simulate.read_body(image_response)
+  |> string.contains("width=\"120\"")
+  |> should.be_true
+  simulate.read_body(record_response)
+  |> json.parse(decode.at(["num"], decode.int))
+  |> should.equal(Ok(2))
+  remaining_names(connection) |> should.equal(["has%20space"])
+}
+
+pub fn request_rejects_invalid_names_without_creating_rows_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  database.setup(database.Sqlite(connection))
+
+  list.each(["", string.repeat("a", 65)], fn(name) {
+    request.handle(
+      simulate.request(http.Get, "/record/@" <> name),
+      database.Sqlite(connection),
+      "index",
+      "known",
+    )
+    |> fn(response) { response.status }
+    |> should.equal(400)
+  })
+
+  remaining_names(connection) |> should.equal([])
+}
+
+pub fn demo_never_creates_a_database_row_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  database.setup(database.Sqlite(connection))
+
+  let assert Ok(counter) =
+    database.get_counter(database.Sqlite(connection), "demo")
+
+  counter.num |> should.equal(1_234_567_890)
+  remaining_names(connection) |> should.equal([])
+}
+
+pub fn xml_preserves_glyph_order_padding_and_bookends_test() {
+  cache.store(theme_cache("known", [cache.Start, cache.End, ..digit_glyphs]))
+
+  let rendered_image = svg.xml("known", "known", 12, 3) |> string_tree.to_string
+
+  rendered_image
+  |> string.contains(
+    "<image data-glyph=\"Start\" x=\"0\"/><image data-glyph=\"Digit(0)\" x=\"10\"/><image data-glyph=\"Digit(1)\" x=\"20\"/><image data-glyph=\"Digit(2)\" x=\"30\"/><image data-glyph=\"End\" x=\"40\"/>",
+  )
+  |> should.be_true
 }

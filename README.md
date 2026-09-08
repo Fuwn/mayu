@@ -84,6 +84,16 @@ Counter pruning is disabled unless all three `MAYU_PRUNE_*` variables are set to
 - `/get/@name`: An `image/svg+xml` counter, using `asoul` when loaded or a loaded fallback theme, modifiable using the `theme` query parameter
 - `/record/@name`: Increments the counter and returns a JSON object containing the database's `name`, `num`, `created_at`, and `updated_at` fields for counter `name`
 
+## Checks
+
+Run `gleam test` for the local regression checks. PostgreSQL checks run with
+`MAYU_TEST_DATABASE_URL=postgres://postgres@localhost:5432/mayu_test gleam run -m postgres_test`;
+they use a temporary schema inside a transaction that is rolled back afterwards.
+
+`python3 test/http_smoke.py http://localhost:3000` checks a running test instance, including
+concurrent increments. It creates a counter, so use a disposable database. CI runs it
+against the built container and also checks the Nix build on Linux and macOS.
+
 ## Resource Attributions
 
 - [A-SOUL_Official](https://space.bilibili.com/703007996)
