@@ -3,6 +3,7 @@
 set -euo pipefail
 
 upstream_repository="https://github.com/journey-ad/Moe-Counter"
+upstream_revision="8abee4defc7c10b8d82103a36d826a24416e5169"
 repository_root="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [[ $# -ge 1 ]]; then
@@ -11,8 +12,10 @@ else
   upstream="$(mktemp -d)"
 
   trap 'rm -rf "${upstream}"' EXIT
-  echo "Cloning ${upstream_repository} ..."
-  git clone --quiet --depth 1 "${upstream_repository}" "${upstream}"
+  echo "Fetching ${upstream_repository} at ${upstream_revision} ..."
+  git -C "${upstream}" init --quiet
+  git -C "${upstream}" fetch --quiet --depth 1 "${upstream_repository}" "${upstream_revision}"
+  git -C "${upstream}" checkout --quiet --detach FETCH_HEAD
 fi
 
 source_directory="${upstream}/assets/theme"
@@ -25,6 +28,6 @@ fi
 rsync -a --ignore-existing "${source_directory}/" "${repository_root}/themes/"
 echo "Synced themes into ${repository_root}/themes/"
 
-theme_count="$(($(find "${repository_root}/themes" -mindepth 1 -maxdepth 1 -type d | wc -l)))"
+theme_count="$(find "${repository_root}/themes" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 
 echo "Total themes: ${theme_count}"

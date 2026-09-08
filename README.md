@@ -25,7 +25,10 @@ E.g., [mayu.due.moe/get/@demo?theme=urushi](https://mayu.due.moe/get/@demo?theme
 This repository tracks four original themes: `garukura`, `lain`, `urushi`, and `yuruyuri`. The full
 [Moe-Counter](https://github.com/journey-ad/Moe-Counter) theme collection (`asoul`, `gelbooru`,
 `moebooru`, `rule34`, and dozens more) is pulled in by `./scripts/sync-themes.sh`, which the
-Docker image runs at build time. Run it once after cloning if you want the full set locally.
+Docker image runs at build time. Run it after cloning if you want the full set locally.
+The script fetches the upstream revision pinned in `scripts/sync-themes.sh` and copies missing
+files without replacing or deleting existing local files. To use a local upstream checkout,
+pass its path as the script's first argument.
 
 Mayu will pad the counter number with zeroes until it reaches a length of 6 characters. You can modify this behaviour by changing the `padding` query parameter of any `get` operation, up to a maximum of 12.
 
