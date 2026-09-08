@@ -26,17 +26,12 @@
       let
         inherit (gitignore.lib) gitignoreSource;
 
-        pkgs = import nixpkgs {
-          inherit system;
-
-          overlays = [
-            nix-gleam.overlays.default
-          ];
-        };
+        pkgs = import nixpkgs { inherit system; };
+        inherit (pkgs.callPackage "${nix-gleam}/builder" { }) buildGleamApplication;
       in
       {
         packages = {
-          default = pkgs.buildGleamApplication {
+          default = buildGleamApplication {
             src = gitignoreSource ./.;
 
             rebar3Package = pkgs.rebar3WithPlugins {
@@ -51,7 +46,7 @@
           buildInputs = with pkgs; [
             gleam
             rebar3
-	    erlang
+            erlang
           ];
         };
       }
