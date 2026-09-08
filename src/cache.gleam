@@ -40,14 +40,11 @@ pub fn load_themes() {
     |> string.split(",")
     |> list.map(string.trim)
     |> list.filter(fn(name) { name != "" })
-
   let themes = read_directory_or_empty("./themes")
-
   let selected_themes = case enabled_themes {
     [] -> themes
     _ -> list.filter(themes, fn(theme) { list.contains(enabled_themes, theme) })
   }
-
   let image_cache =
     selected_themes
     |> list.filter_map(fn(theme) {
@@ -60,12 +57,16 @@ pub fn load_themes() {
           Error(Nil)
         }
         False, [] -> Ok(#(theme, glyphs))
-        False, missing -> {
+        False, missing_digit_numbers -> {
           wisp.log_warning(
             "Theme "
             <> theme
             <> " is missing digit glyphs: "
-            <> { missing |> list.map(int.to_string) |> string.join(", ") },
+            <> {
+              missing_digit_numbers
+              |> list.map(int.to_string)
+              |> string.join(", ")
+            },
           )
 
           Ok(#(theme, glyphs))
@@ -118,10 +119,10 @@ fn load_theme(theme) -> Dict(Glyph, CachedImage) {
 }
 
 fn missing_digits(glyphs) -> List(Int) {
-  int.range(from: 0, to: 10, with: [], run: fn(missing, digit) {
+  int.range(from: 0, to: 10, with: [], run: fn(missing_digit_numbers, digit) {
     case dict.has_key(glyphs, Digit(digit)) {
-      True -> missing
-      False -> [digit, ..missing]
+      True -> missing_digit_numbers
+      False -> [digit, ..missing_digit_numbers]
     }
   })
   |> list.reverse
@@ -153,30 +154,33 @@ fn load_cached_image(path) {
       )
     }),
   )
-  use info <- result.map(
+  use image_information <- result.map(
     image.get_image_information(image_data)
     |> result.map_error(fn(error) {
       wisp.log_error("Failed to load image " <> path <> ": " <> error)
     }),
   )
 
-  cached_image(image_data, info)
+  cached_image(image_data, image_information)
 }
 
-fn cached_image(image_data, info: image.ImageInformation) -> CachedImage {
+fn cached_image(
+  image_data,
+  image_information: image.ImageInformation,
+) -> CachedImage {
   CachedImage(
     element_prefix: "<image height=\""
-      <> int.to_string(info.height)
+      <> int.to_string(image_information.height)
       <> "\" width=\""
-      <> int.to_string(info.width)
+      <> int.to_string(image_information.width)
       <> "\" x=\"",
     element_suffix: "\" y=\"0\" xlink:href=\"data:image/"
-      <> info.extension
+      <> image_information.extension
       <> ";base64,"
       <> bit_array.base64_encode(image_data, True)
       <> "\"/>",
-    width: info.width,
-    height: info.height,
+    width: image_information.width,
+    height: image_information.height,
   )
 }
 

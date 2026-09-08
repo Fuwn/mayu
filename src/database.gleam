@@ -140,13 +140,13 @@ pub fn get_counter(database: Database, name) {
 
 fn counter_decoder() -> decode.Decoder(Counter) {
   use name <- decode.field(0, decode.string)
-  use num <- decode.field(1, decode.int)
+  use hit_count <- decode.field(1, decode.int)
   use created_at <- decode.field(2, decode.optional(decode.string))
   use updated_at <- decode.field(3, decode.optional(decode.string))
 
   decode.success(Counter(
     name,
-    num,
+    hit_count,
     option.unwrap(created_at, ""),
     option.unwrap(updated_at, ""),
   ))
@@ -204,20 +204,26 @@ fn report_query_failure(detail: String) {
   Error("Database operation failed")
 }
 
-pub fn prune(database: Database, min_count: Int, max_age_days: Int) -> Nil {
+pub fn prune(
+  database: Database,
+  minimum_count: Int,
+  maximum_age_days: Int,
+) -> Nil {
   let result = case database {
     Sqlite(connection) ->
       sqlight.exec("delete from tb_count
-         where num < " <> int.to_string(min_count) <> "
+         where num < " <> int.to_string(minimum_count) <> "
            and updated_at is not null
-           and updated_at < datetime('now', '-" <> int.to_string(max_age_days) <> " days');", connection)
+           and updated_at < datetime('now', '-" <> int.to_string(
+        maximum_age_days,
+      ) <> " days');", connection)
       |> result.map_error(string.inspect)
     Postgres(connection) ->
       pog.query("delete from tb_count
-         where num < " <> int.to_string(min_count) <> "
+         where num < " <> int.to_string(minimum_count) <> "
            and updated_at is not null
            and updated_at < to_char(now() at time zone 'utc' - make_interval(days => " <> int.to_string(
-        max_age_days,
+        maximum_age_days,
       ) <> "), 'YYYY-MM-DD HH24:MI:SS');")
       |> pog.execute(connection)
       |> result.replace(Nil)

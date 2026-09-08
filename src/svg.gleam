@@ -10,8 +10,8 @@ type XmlImages {
   XmlImages(xml: StringTree, width: Int, height: Int)
 }
 
-fn append_image(svgs, cached_image: cache.CachedImage, x_offset) {
-  svgs
+fn append_image(image_elements, cached_image: cache.CachedImage, x_offset) {
+  image_elements
   |> string_tree.append(cached_image.element_prefix)
   |> string_tree.append(int.to_string(x_offset))
   |> string_tree.append(cached_image.element_suffix)

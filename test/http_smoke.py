@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+
 import json
 import sys
 import time
@@ -21,11 +22,9 @@ else:
 
 counter_name = "smoke-" + uuid.uuid4().hex
 
-
 def record_hit(_=None):
     with urllib.request.urlopen(base_url + "/record/@" + counter_name, timeout=10) as response:
         return json.load(response)["num"]
-
 
 assert record_hit() == 1
 

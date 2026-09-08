@@ -10,9 +10,9 @@ import wisp
 
 const default_padding = 6
 
-const max_padding = 12
+const maximum_padding = 12
 
-const max_name_length = 64
+const maximum_name_length = 64
 
 fn middleware(request, handle) {
   use <- wisp.log_request(request)
@@ -23,7 +23,7 @@ fn middleware(request, handle) {
 }
 
 fn require_valid_name(name, continue) {
-  case name != "" && string.length(name) <= max_name_length {
+  case name != "" && string.length(name) <= maximum_name_length {
     True -> continue()
     False -> wisp.bad_request("")
   }
@@ -45,7 +45,7 @@ fn query_theme(query, default_theme) -> String {
 fn query_padding(query) -> Int {
   list.key_find(query, "padding")
   |> result.try(int.parse)
-  |> result.map(int.clamp(_, min: 0, max: max_padding))
+  |> result.map(int.clamp(_, min: 0, max: maximum_padding))
   |> result.unwrap(default_padding)
 }
 

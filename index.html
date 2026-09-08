@@ -275,12 +275,17 @@
       const exampleImage = document.getElementById("example");
       const copyCodes = document.getElementById("copy-codes");
       const requestedTheme = queryParameters.get("theme");
+
       let inputTimeout;
 
       idInput.value = queryParameters.get("id") || "";
 
       if (requestedTheme) {
-        if (![...themeSelect.options].some((option) => option.value === requestedTheme)) {
+        const themeIsListed = [...themeSelect.options].some(
+          (option) => option.value === requestedTheme,
+        );
+
+        if (!themeIsListed) {
           themeSelect.add(new Option(requestedTheme, requestedTheme));
         }
 
@@ -291,7 +296,8 @@
       const encodeNameForPath = (name) =>
         name.replace(/#/g, "%23").replace(/\?/g, "%3F");
       const escapeHtmlAttribute = (value) =>
-        value.replaceAll("&", "&amp;")
+        value
+          .replaceAll("&", "&amp;")
           .replaceAll('"', "&quot;")
           .replaceAll("<", "&lt;")
           .replaceAll(">", "&gt;");
@@ -301,7 +307,8 @@
 
         exampleImage.src = `/get/@${encodeNameForPath(counterName)}?theme=${encodeURIComponent(theme)}`;
 
-        const markdownName = counterName.replace(/[\\[\]`*_]/g, "\\$&")
+        const markdownName = counterName
+          .replace(/[\\[\]`*_]/g, "\\$&")
           .replaceAll("&", "&amp;")
           .replaceAll("<", "&lt;");
         const htmlName = escapeHtmlAttribute(counterName);

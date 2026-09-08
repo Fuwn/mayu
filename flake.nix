@@ -26,24 +26,24 @@
       let
         inherit (gitignore.lib) gitignoreSource;
 
-        pkgs = import nixpkgs { inherit system; };
-        inherit (pkgs.callPackage "${nix-gleam}/builder" { }) buildGleamApplication;
+        packages = import nixpkgs { inherit system; };
+        inherit (packages.callPackage "${nix-gleam}/builder" { }) buildGleamApplication;
       in
       {
         packages = {
           default = buildGleamApplication {
             src = gitignoreSource ./.;
 
-            rebar3Package = pkgs.rebar3WithPlugins {
-              plugins = with pkgs.beamPackages; [ pc ];
+            rebar3Package = packages.rebar3WithPlugins {
+              plugins = with packages.beamPackages; [ pc ];
             };
           };
 
           mayu = self.packages.${system}.default;
         };
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
+        devShells.default = packages.mkShell {
+          buildInputs = with packages; [
             gleam
             rebar3
             erlang

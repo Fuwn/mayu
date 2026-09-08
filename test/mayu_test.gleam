@@ -127,11 +127,11 @@ const digit_glyphs = [
 pub fn xml_falls_back_to_the_default_theme_test() {
   cache.store(theme_cache("known", digit_glyphs))
 
-  let rendered =
+  let rendered_image =
     svg.xml("does-not-exist", "known", 7, 3) |> string_tree.to_string
 
-  rendered |> string.contains("width=\"30\"") |> should.be_true
-  rendered |> string.contains("height=\"20\"") |> should.be_true
+  rendered_image |> string.contains("width=\"30\"") |> should.be_true
+  rendered_image |> string.contains("height=\"20\"") |> should.be_true
 }
 
 pub fn xml_renders_nothing_for_a_theme_missing_from_every_cache_test() {

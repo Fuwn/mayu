@@ -69,14 +69,14 @@ fn with_database(continue: fn(database.Database) -> a) -> a {
       let pool_name = process.new_name("mayu_database")
 
       case pog.url_config(pool_name, url) {
-        Ok(config) -> {
+        Ok(configuration) -> {
           // Under saturation a hit counter should queue briefly rather than
           // shed requests, so the checkout target is generous.
-          let config =
-            config
+          let configuration =
+            configuration
             |> pog.pool_size(25)
             |> pog.queue_target(250)
-          let assert Ok(pool) = pog.start(config)
+          let assert Ok(pool) = pog.start(configuration)
 
           continue(database.Postgres(pool.data))
         }
@@ -112,11 +112,16 @@ fn ensure_data_directory() -> Nil {
 }
 
 fn start_pruner(connection) -> Nil {
-  case prune_config() {
-    Ok(#(min_count, max_age_days, interval_hours)) -> {
+  case prune_configuration() {
+    Ok(#(minimum_count, maximum_age_days, interval_hours)) -> {
       let _ =
         process.spawn_unlinked(fn() {
-          prune_loop(connection, min_count, max_age_days, interval_hours)
+          prune_loop(
+            connection,
+            minimum_count,
+            maximum_age_days,
+            interval_hours,
+          )
         })
 
       wisp.log_info("Counter pruning enabled")
@@ -137,10 +142,10 @@ fn start_pruner(connection) -> Nil {
   }
 }
 
-fn prune_loop(connection, min_count, max_age_days, interval_hours) {
+fn prune_loop(connection, minimum_count, maximum_age_days, interval_hours) {
   sleep_hours(interval_hours)
-  database.prune(connection, min_count, max_age_days)
-  prune_loop(connection, min_count, max_age_days, interval_hours)
+  database.prune(connection, minimum_count, maximum_age_days)
+  prune_loop(connection, minimum_count, maximum_age_days, interval_hours)
 }
 
 const milliseconds_per_hour = 3_600_000
@@ -161,20 +166,20 @@ const prune_variable_names = [
   "MAYU_PRUNE_MIN_COUNT", "MAYU_PRUNE_AFTER_DAYS", "MAYU_PRUNE_EVERY_HOURS",
 ]
 
-fn prune_config() -> Result(#(Int, Int, Int), Nil) {
-  case list.map(prune_variable_names, positive_env_int) {
-    [Ok(min_count), Ok(max_age_days), Ok(interval_hours)] ->
-      Ok(#(min_count, max_age_days, interval_hours))
+fn prune_configuration() -> Result(#(Int, Int, Int), Nil) {
+  case list.map(prune_variable_names, positive_environment_integer) {
+    [Ok(minimum_count), Ok(maximum_age_days), Ok(interval_hours)] ->
+      Ok(#(minimum_count, maximum_age_days, interval_hours))
     _ -> Error(Nil)
   }
 }
 
-fn positive_env_int(name) -> Result(Int, Nil) {
+fn positive_environment_integer(name) -> Result(Int, Nil) {
   use value <- result.try(envoy.get(name))
-  use parsed <- result.try(int.parse(value))
+  use parsed_integer <- result.try(int.parse(value))
 
-  case parsed > 0 {
-    True -> Ok(parsed)
+  case parsed_integer > 0 {
+    True -> Ok(parsed_integer)
     False -> Error(Nil)
   }
 }
