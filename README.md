@@ -16,16 +16,13 @@ Mayu is written in [Gleam](https://gleam.run) and uses [SQLite](https://sqlite.o
 
 <br>
 
-Don't know Gleam or functional paradigms? Take a look at the [source tree](./src) and see just how
-easy it is to understand! It's all contained in roughly 600 lines of code!
-
 ## Usage
 
 Themes are selectable using the `theme` query parameter of any `get` operation.
 
 E.g., [mayu.due.moe/get/@demo?theme=urushi](https://mayu.due.moe/get/@demo?theme=urushi)
 
-This repository tracks three original themes: `garukura`, `lain`, and `urushi`. The full
+This repository tracks four original themes: `garukura`, `lain`, `urushi`, and `yuruyuri`. The full
 [Moe-Counter](https://github.com/journey-ad/Moe-Counter) theme collection (`asoul`, `gelbooru`,
 `moebooru`, `rule34`, and dozens more) is pulled in by `./scripts/sync-themes.sh`, which the
 Docker image runs at build time. Run it once after cloning if you want the full set locally.
@@ -81,8 +78,8 @@ Counter pruning is disabled unless all three `MAYU_PRUNE_*` variables are set to
 ### Routes
 
 - `/heart-beat`: `alive`
-- `/get/@name`: An `image/svg+xml` counter, defaulting to theme `asoul`, modifiable using the `theme` query parameter
-- `/record/@name`: JSON object containing the database's `name`, `num`, `created_at`, and `updated_at` fields for counter `name`
+- `/get/@name`: An `image/svg+xml` counter, using `asoul` when loaded or a loaded fallback theme, modifiable using the `theme` query parameter
+- `/record/@name`: Increments the counter and returns a JSON object containing the database's `name`, `num`, `created_at`, and `updated_at` fields for counter `name`
 
 ## Resource Attributions
 
