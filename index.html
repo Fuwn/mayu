@@ -264,48 +264,33 @@
     <img src="" alt="Mascot" class="mascot" title="Mascot" />
 
     <script>
-      const themeQueryParameter = new URLSearchParams(
-        window.location.search,
-      ).get("theme");
-      const defaultConfiguration = {
-        id: new URLSearchParams(window.location.search).get("id") || "demo",
-        theme: themeQueryParameter || "{{ DEFAULT_THEME }}",
-      };
-      let inputTimeout;
+      const queryParameters = new URLSearchParams(window.location.search);
       const idInput = document.getElementById("idInput");
       const themeSelect = document.getElementById("themeSelect");
-      const image = document.getElementById("example");
-      const copyCodesInput = document.getElementById("copy-codes");
-      let inputValue = defaultConfiguration.id;
-      let themeValue = defaultConfiguration.theme;
-      const setCopyCodes = () => {
-        copyCodesInput.innerText = `![${inputValue}](${image.src})\n\n<img src="${image.src}" alt="${inputValue}" />`;
-      };
+      const exampleImage = document.getElementById("example");
+      const copyCodes = document.getElementById("copy-codes");
+      const requestedTheme = queryParameters.get("theme");
+      let inputTimeout;
+
+      idInput.value = queryParameters.get("id") || "";
+
+      if (requestedTheme) {
+        if (![...themeSelect.options].some((option) => option.value === requestedTheme)) {
+          themeSelect.add(new Option(requestedTheme, requestedTheme));
+        }
+
+        themeSelect.value = requestedTheme;
+      }
 
       // The server never decodes paths, so escaping more renames live counters.
       const encodeNameForPath = (name) =>
         name.replace(/#/g, "%23").replace(/\?/g, "%3F");
-      const set = () => {
-        if (idInput.value !== "") {
-          inputValue = idInput.value;
-        } else {
-          inputValue = defaultConfiguration.id;
+      const updateCounter = () => {
+        const counterName = idInput.value || "demo";
+        const theme = themeSelect.value;
 
-          if (inputValue !== "demo") {
-            idInput.value = inputValue;
-          }
-        }
-
-        if (themeQueryParameter) {
-          themeValue = themeQueryParameter;
-          themeSelect.value = themeValue;
-        } else {
-          themeValue = themeSelect.value;
-        }
-
-        image.src = `/get/@${encodeNameForPath(inputValue)}?theme=${encodeURIComponent(themeValue)}`;
-
-        setCopyCodes();
+        exampleImage.src = `/get/@${encodeNameForPath(counterName)}?theme=${encodeURIComponent(theme)}`;
+        copyCodes.innerText = `![${counterName}](${exampleImage.src})\n\n<img src="${exampleImage.src}" alt="${counterName}" />`;
       };
       const mascots = [
         { name: "Akaza Akari", image: "https://i.imgur.com/efamPLp.png" },
@@ -351,13 +336,13 @@
         { name: "Yuzuki Yukari", image: "https://i.imgur.com/84HOYIc.png" },
       ];
 
-      set();
+      updateCounter();
       idInput.addEventListener("input", () => {
         clearTimeout(inputTimeout);
 
-        inputTimeout = setTimeout(set, 500);
+        inputTimeout = setTimeout(updateCounter, 500);
       });
-      themeSelect.addEventListener("change", set);
+      themeSelect.addEventListener("change", updateCounter);
 
       const randomMascot = mascots[Math.floor(Math.random() * mascots.length)];
       const mascot = document.querySelector(".mascot");

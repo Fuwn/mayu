@@ -31,7 +31,6 @@ pub fn main() {
   let index_html =
     index_html_source
     |> string.replace("{{ MAYU_VERSION }}", version_tag)
-    |> string.replace("{{ DEFAULT_THEME }}", default_theme)
     |> string.replace(
       "{{ THEME_OPTIONS }}",
       theme_options(image_cache, default_theme),
@@ -183,7 +182,9 @@ fn positive_env_int(name) -> Result(Int, Nil) {
 fn theme_options(image_cache, default_theme) {
   image_cache
   |> dict.keys
-  |> list.filter(fn(slug) { !string.ends_with(slug, "-h") })
+  |> list.filter(fn(slug) {
+    slug == default_theme || !string.ends_with(slug, "-h")
+  })
   |> list.sort(string.compare)
   |> list.map(fn(slug) { theme_option(slug, default_theme) })
   |> string.join("\n")
