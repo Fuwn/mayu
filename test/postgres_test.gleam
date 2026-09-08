@@ -22,6 +22,10 @@ pub fn main() {
         connection,
         "insert into tb_count (name, num) values ('legacy', 41)",
       )
+      execute(
+        connection,
+        "select setval(pg_get_serial_sequence('tb_count', 'id'), 2147483647)",
+      )
       database.setup(database.Postgres(connection))
       database.setup(database.Postgres(connection))
 
@@ -34,6 +38,34 @@ pub fn main() {
       counter.created_at |> should.equal("")
       counter.updated_at |> should.not_equal("")
       next_counter.num |> should.equal(43)
+      execute(
+        connection,
+        "update tb_count set num = 2147483647 where name = 'legacy'",
+      )
+
+      let assert Ok(large_counter) =
+        database.get_counter(database.Postgres(connection), "legacy")
+      let assert Ok(pog.Returned(_, column_types)) =
+        pog.query(
+          "select attname, atttypid::regtype::text from pg_attribute where attrelid = 'tb_count'::regclass and attname in ('id', 'num') order by attname",
+        )
+        |> pog.returning({
+          use name <- decode.field(0, decode.string)
+          use column_type <- decode.field(1, decode.string)
+
+          decode.success(#(name, column_type))
+        })
+        |> pog.execute(connection)
+      let assert Ok(pog.Returned(_, sequence_maximums)) =
+        pog.query(
+          "select seqmax from pg_sequence where seqrelid = pg_get_serial_sequence('tb_count', 'id')::regclass",
+        )
+        |> pog.returning(decode.at([0], decode.int))
+        |> pog.execute(connection)
+
+      large_counter.num |> should.equal(2_147_483_648)
+      column_types |> should.equal([#("id", "bigint"), #("num", "bigint")])
+      sequence_maximums |> should.equal([9_223_372_036_854_775_807])
       execute(
         connection,
         "insert into tb_count (name, num, updated_at) values ('idle_low', 1, '2000-01-01 00:00:00'), ('idle_high', 9999, '2000-01-01 00:00:00'), ('legacy_null', 1, null)",
