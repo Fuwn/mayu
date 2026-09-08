@@ -285,12 +285,24 @@
       // The server never decodes paths, so escaping more renames live counters.
       const encodeNameForPath = (name) =>
         name.replace(/#/g, "%23").replace(/\?/g, "%3F");
+      const escapeHtmlAttribute = (value) =>
+        value.replaceAll("&", "&amp;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
       const updateCounter = () => {
         const counterName = idInput.value || "demo";
         const theme = themeSelect.value;
 
         exampleImage.src = `/get/@${encodeNameForPath(counterName)}?theme=${encodeURIComponent(theme)}`;
-        copyCodes.innerText = `![${counterName}](${exampleImage.src})\n\n<img src="${exampleImage.src}" alt="${counterName}" />`;
+
+        const markdownName = counterName.replace(/[\\[\]`*_]/g, "\\$&")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;");
+        const htmlName = escapeHtmlAttribute(counterName);
+        const htmlUrl = escapeHtmlAttribute(exampleImage.src);
+
+        copyCodes.innerText = `![${markdownName}](<${exampleImage.src}>)\n\n<img src="${htmlUrl}" alt="${htmlName}" />`;
       };
       const mascots = [
         { name: "Akaza Akari", image: "https://i.imgur.com/efamPLp.png" },
