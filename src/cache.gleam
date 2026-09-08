@@ -48,36 +48,56 @@ pub fn load_themes() {
     _ -> list.filter(themes, fn(theme) { list.contains(enabled_themes, theme) })
   }
 
-  selected_themes
-  |> list.filter_map(fn(theme) {
-    let glyphs = load_theme(theme)
+  let image_cache =
+    selected_themes
+    |> list.filter_map(fn(theme) {
+      let glyphs = load_theme(theme)
 
-    case dict.is_empty(glyphs), missing_digits(glyphs) {
-      True, _ -> {
-        wisp.log_error("Ignoring " <> theme <> ": no glyphs found")
+      case dict.is_empty(glyphs), missing_digits(glyphs) {
+        True, _ -> {
+          wisp.log_error("Ignoring " <> theme <> ": no glyphs found")
 
-        Error(Nil)
+          Error(Nil)
+        }
+        False, [] -> Ok(#(theme, glyphs))
+        False, missing -> {
+          wisp.log_warning(
+            "Theme "
+            <> theme
+            <> " is missing digit glyphs: "
+            <> { missing |> list.map(int.to_string) |> string.join(", ") },
+          )
+
+          Ok(#(theme, glyphs))
+        }
       }
-      False, [] -> Ok(#(theme, glyphs))
-      False, missing -> {
-        wisp.log_warning(
-          "Theme "
-          <> theme
-          <> " is missing digit glyphs: "
-          <> { missing |> list.map(int.to_string) |> string.join(", ") },
-        )
+    })
+    |> dict.from_list
 
-        Ok(#(theme, glyphs))
-      }
-    }
-  })
-  |> dict.from_list
+  case dict.is_empty(image_cache) {
+    True ->
+      wisp.log_error(
+        "No themes loaded: check ./themes and MAYU_THEMES; counters will still be recorded",
+      )
+    False -> Nil
+  }
+
+  image_cache
 }
 
 fn read_directory_or_empty(path) -> List(String) {
   case simplifile.read_directory(path) {
     Ok(files) -> files
-    Error(_) -> []
+    Error(error) -> {
+      wisp.log_error(
+        "Failed to read theme directory "
+        <> path
+        <> ": "
+        <> simplifile.describe_error(error),
+      )
+
+      []
+    }
   }
 }
 
@@ -124,14 +144,19 @@ fn parse_glyph_filename(file) {
 fn load_cached_image(path) {
   use image_data <- result.try(
     simplifile.read_bits(from: path)
-    |> result.map_error(fn(_) {
-      wisp.log_error("Error reading image file " <> path)
+    |> result.map_error(fn(error) {
+      wisp.log_error(
+        "Failed to read image "
+        <> path
+        <> ": "
+        <> simplifile.describe_error(error),
+      )
     }),
   )
   use info <- result.map(
     image.get_image_information(image_data)
-    |> result.map_error(fn(_) {
-      wisp.log_error("Error getting image information for " <> path)
+    |> result.map_error(fn(error) {
+      wisp.log_error("Failed to load image " <> path <> ": " <> error)
     }),
   )
 

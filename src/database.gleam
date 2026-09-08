@@ -187,7 +187,7 @@ pub fn prune(database: Database, min_count: Int, max_age_days: Int) -> Nil {
          where num < " <> int.to_string(min_count) <> "
            and updated_at is not null
            and updated_at < datetime('now', '-" <> int.to_string(max_age_days) <> " days');", connection)
-      |> result.replace_error(Nil)
+      |> result.map_error(string.inspect)
     Postgres(connection) ->
       pog.query("delete from tb_count
          where num < " <> int.to_string(min_count) <> "
@@ -197,11 +197,11 @@ pub fn prune(database: Database, min_count: Int, max_age_days: Int) -> Nil {
       ) <> "), 'YYYY-MM-DD HH24:MI:SS');")
       |> pog.execute(connection)
       |> result.replace(Nil)
-      |> result.replace_error(Nil)
+      |> result.map_error(string.inspect)
   }
 
   case result {
     Ok(_) -> Nil
-    Error(_) -> wisp.log_error("Failed to prune stale counters")
+    Error(error) -> wisp.log_error("Failed to prune stale counters: " <> error)
   }
 }
