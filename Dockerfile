@@ -24,10 +24,10 @@ RUN case "$TARGETARCH" in \
 WORKDIR /mayu
 
 COPY gleam.toml manifest.toml ./
+
+RUN gleam deps download
+
 COPY src/ ./src/
-
-RUN gleam build
-
 COPY themes/ ./themes/
 COPY scripts/ ./scripts/
 
