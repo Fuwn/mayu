@@ -207,17 +207,22 @@
 
     <main>
       <div>
-        <h2>Username</h2>
+        <h2><label for="idInput">Username</label></h2>
 
-        <p class="label">
+        <p class="label" id="username-description">
           Enter the username you'd like to use as the ID of your counter.
         </p>
 
-        <input type="text" id="idInput" placeholder="demo" />
+        <input
+          type="text"
+          id="idInput"
+          placeholder="demo"
+          aria-describedby="username-description"
+        />
 
         <p></p>
 
-        <select id="themeSelect">
+        <select id="themeSelect" aria-label="Theme">
           {{ THEME_OPTIONS }}
         </select>
 
