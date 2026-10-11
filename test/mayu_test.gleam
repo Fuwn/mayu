@@ -41,10 +41,62 @@ pub fn setup_migrates_legacy_moe_counter_table_test() {
 
   let assert Ok(counter) =
     database.get_counter(database.Sqlite(connection), "legacy")
+  let assert Ok(index_counts) =
+    sqlight.query(
+      "select count(*) from pragma_index_list('tb_count');",
+      on: connection,
+      with: [],
+      expecting: decode.at([0], decode.int),
+    )
 
   counter.num |> should.equal(42)
   counter.created_at |> should.equal("")
   counter.updated_at |> should.not_equal("")
+  index_counts |> should.equal([2])
+}
+
+pub fn setup_preserves_sqlite_identity_and_name_constraints_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  database.setup(database.Sqlite(connection))
+  database.setup(database.Sqlite(connection))
+
+  let assert Ok(indexed_columns) =
+    sqlight.query(
+      "select name from pragma_index_info('sqlite_autoindex_tb_count_1');",
+      on: connection,
+      with: [],
+      expecting: decode.at([0], decode.string),
+    )
+  let assert Ok(_) =
+    sqlight.exec(
+      "insert into tb_count (id, name) values (128, 'first');",
+      connection,
+    )
+  let assert Error(_) =
+    sqlight.exec(
+      "insert into tb_count (id, name) values (128, 'duplicate-id');",
+      connection,
+    )
+  let assert Error(_) =
+    sqlight.exec("insert into tb_count (name) values ('first');", connection)
+  let assert Ok(_) =
+    sqlight.exec(
+      "delete from tb_count where name = 'first';
+       insert into tb_count (name) values ('second');",
+      connection,
+    )
+  let assert Ok(identities) =
+    sqlight.query(
+      "select id from tb_count where name = 'second';",
+      on: connection,
+      with: [],
+      expecting: decode.at([0], decode.int),
+    )
+
+  indexed_columns |> should.equal(["name"])
+  identities |> should.equal([129])
+  remaining_names(connection) |> should.equal(["second"])
 }
 
 pub fn prune_removes_only_idle_low_count_test() {

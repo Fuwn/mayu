@@ -40,7 +40,7 @@ fn setup_sqlite(connection) {
   let assert Ok(_) =
     sqlight.exec(
       "create table if not exists tb_count (
-        id integer primary key autoincrement not null unique,
+        id integer primary key autoincrement not null,
         name text not null unique,
         num int not null default (0)
       ) strict;",
