@@ -27,11 +27,12 @@ COPY gleam.toml manifest.toml ./
 
 RUN gleam deps download
 
-COPY src/ ./src/
 COPY themes/ ./themes/
 COPY scripts/ ./scripts/
 
 RUN ./scripts/sync-themes.sh
+
+COPY src/ ./src/
 
 RUN gleam export erlang-shipment
 
