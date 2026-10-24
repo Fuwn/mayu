@@ -1,5 +1,6 @@
 import envoy
 import gleam/bit_array
+import gleam/crypto
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
@@ -8,10 +9,13 @@ import gleam/string
 import simplifile
 import wisp
 
+/// A glyph image pre-rendered as an SVG `<image>` definition and the start of a
+/// `<use>` element that references it. The definition's ID comes from the
+/// image bytes, so counters inlined into one HTML document can share IDs safely.
 pub type CachedImage {
   CachedImage(
-    element_prefix: String,
-    element_suffix: String,
+    definition: String,
+    reference_prefix: String,
     width: Int,
     height: Int,
   )
@@ -201,17 +205,27 @@ fn cached_image(
   image_data,
   image_information: ImageInformation,
 ) -> CachedImage {
+  let image_id =
+    "mayu-"
+    <> {
+      crypto.hash(crypto.Sha256, image_data)
+      |> bit_array.base16_encode
+      |> string.slice(at_index: 0, length: 16)
+    }
+
   CachedImage(
-    element_prefix: "<image height=\""
+    definition: "<image id=\""
+      <> image_id
+      <> "\" height=\""
       <> int.to_string(image_information.height)
       <> "\" width=\""
       <> int.to_string(image_information.width)
-      <> "\" x=\"",
-    element_suffix: "\" y=\"0\" xlink:href=\"data:image/"
+      <> "\" xlink:href=\"data:image/"
       <> image_information.extension
       <> ";base64,"
       <> bit_array.base64_encode(image_data, True)
       <> "\"/>",
+    reference_prefix: "<use xlink:href=\"#" <> image_id <> "\" x=\"",
     width: image_information.width,
     height: image_information.height,
   )

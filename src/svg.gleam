@@ -7,32 +7,59 @@ import gleam/string_tree.{type StringTree}
 import theme
 
 type RenderedGlyphs {
-  RenderedGlyphs(elements: StringTree, width: Int, height: Int)
+  RenderedGlyphs(
+    definitions: StringTree,
+    references: StringTree,
+    defined_images: List(String),
+    width: Int,
+    height: Int,
+  )
 }
 
-fn append_image(image_elements, cached_image: theme.CachedImage, x_offset) {
-  image_elements
-  |> string_tree.append(cached_image.element_prefix)
-  |> string_tree.append(int.to_string(x_offset))
-  |> string_tree.append(cached_image.element_suffix)
+fn add_glyph(rendered: RenderedGlyphs, cached_image: theme.CachedImage) {
+  let is_defined =
+    list.contains(rendered.defined_images, cached_image.reference_prefix)
+  let references =
+    rendered.references
+    |> string_tree.append(cached_image.reference_prefix)
+    |> string_tree.append(int.to_string(rendered.width))
+    |> string_tree.append("\"/>")
+
+  case is_defined {
+    True -> RenderedGlyphs(..rendered, references:)
+    False ->
+      RenderedGlyphs(
+        ..rendered,
+        definitions: string_tree.append(
+          rendered.definitions,
+          cached_image.definition,
+        ),
+        references:,
+        defined_images: [
+          cached_image.reference_prefix,
+          ..rendered.defined_images
+        ],
+      )
+  }
 }
 
 fn render_glyphs(glyph_images, glyphs) -> RenderedGlyphs {
-  list.fold(
-    glyphs,
-    RenderedGlyphs(string_tree.new(), 0, 0),
-    fn(accumulator, glyph) {
-      case dict.get(glyph_images, glyph) {
-        Ok(cached_image) ->
-          RenderedGlyphs(
-            append_image(accumulator.elements, cached_image, accumulator.width),
-            accumulator.width + cached_image.width,
-            int.max(accumulator.height, cached_image.height),
-          )
-        Error(_) -> accumulator
+  let empty = RenderedGlyphs(string_tree.new(), string_tree.new(), [], 0, 0)
+
+  list.fold(glyphs, empty, fn(rendered, glyph) {
+    case dict.get(glyph_images, glyph) {
+      Ok(cached_image) -> {
+        let rendered = add_glyph(rendered, cached_image)
+
+        RenderedGlyphs(
+          ..rendered,
+          width: rendered.width + cached_image.width,
+          height: int.max(rendered.height, cached_image.height),
+        )
       }
-    },
-  )
+      Error(_) -> rendered
+    }
+  })
 }
 
 fn pad_digits(number, padding) -> List(Int) {
@@ -72,8 +99,10 @@ pub fn xml(theme_name, fallback_theme_name, number, padding) {
     <> int.to_string(rendered_glyphs.height)
     <> "\" style=\"image-rendering: pixelated;\" version=\"1.1\" width=\""
     <> int.to_string(rendered_glyphs.width)
-    <> "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
+    <> "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><defs>",
   )
-  |> string_tree.append_tree(rendered_glyphs.elements)
+  |> string_tree.append_tree(rendered_glyphs.definitions)
+  |> string_tree.append("</defs><g>")
+  |> string_tree.append_tree(rendered_glyphs.references)
   |> string_tree.append("</g></svg>")
 }

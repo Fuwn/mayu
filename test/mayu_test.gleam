@@ -145,10 +145,10 @@ fn theme_cache(theme_name, glyphs) {
           #(
             glyph,
             theme.CachedImage(
-              element_prefix: "<image data-glyph=\""
+              definition: "<image id=\"" <> string.inspect(glyph) <> "\"/>",
+              reference_prefix: "<use xlink:href=\"#"
                 <> string.inspect(glyph)
                 <> "\" x=\"",
-              element_suffix: "\"/>",
               width: 10,
               height: 20,
             ),
@@ -275,7 +275,26 @@ pub fn xml_preserves_glyph_order_padding_and_bookends_test() {
 
   rendered_image
   |> string.contains(
-    "<image data-glyph=\"Start\" x=\"0\"/><image data-glyph=\"Digit(0)\" x=\"10\"/><image data-glyph=\"Digit(1)\" x=\"20\"/><image data-glyph=\"Digit(2)\" x=\"30\"/><image data-glyph=\"End\" x=\"40\"/>",
+    "<g><use xlink:href=\"#Start\" x=\"0\"/><use xlink:href=\"#Digit(0)\" x=\"10\"/><use xlink:href=\"#Digit(1)\" x=\"20\"/><use xlink:href=\"#Digit(2)\" x=\"30\"/><use xlink:href=\"#End\" x=\"40\"/></g>",
   )
   |> should.be_true
+}
+
+pub fn xml_defines_each_repeated_glyph_once_test() {
+  theme.store_cache(
+    theme_cache("known", [theme.Start, theme.End, ..digit_glyphs]),
+  )
+
+  let rendered_image =
+    svg.xml("known", "known", 1100, 0) |> string_tree.to_string
+
+  rendered_image
+  |> string.contains(
+    "<defs><image id=\"Start\"/><image id=\"Digit(1)\"/><image id=\"Digit(0)\"/><image id=\"End\"/></defs>",
+  )
+  |> should.be_true
+  rendered_image
+  |> string.split("<use ")
+  |> list.length
+  |> should.equal(7)
 }
