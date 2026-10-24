@@ -5,6 +5,11 @@
 Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Moe-Counter). It
 serves the same counter routes and reads Moe-Counter's existing SQLite database.
 
+Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
+counts. Limited to one CPU, Mayu served 3,908 counter images per second while saving every hit.
+Moe-Counter served 317 per second when it also saved every hit. Mayu's compressed Docker image is
+66 MB, and Moe-Counter's is 84 MB.
+
 Mayu is written in [Gleam](https://gleam.run) and stores counters in [SQLite](https://sqlite.org)
 or [PostgreSQL](https://www.postgresql.org).
 
