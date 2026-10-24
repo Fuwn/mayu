@@ -130,11 +130,7 @@ fn remaining_names(connection) -> List(String) {
       "select name from tb_count order by name;",
       on: connection,
       with: [],
-      expecting: {
-        use name <- decode.field(0, decode.string)
-
-        decode.success(name)
-      },
+      expecting: decode.at([0], decode.string),
     )
 
   names
@@ -240,14 +236,15 @@ pub fn request_rejects_invalid_names_without_creating_rows_test() {
   database.setup(database.Sqlite(connection))
 
   list.each(["", string.repeat("a", 65)], fn(name) {
-    request.handle(
-      simulate.request(http.Get, "/record/@" <> name),
-      database.Sqlite(connection),
-      "index",
-      "known",
-    )
-    |> fn(response) { response.status }
-    |> should.equal(400)
+    let record_response =
+      request.handle(
+        simulate.request(http.Get, "/record/@" <> name),
+        database.Sqlite(connection),
+        "index",
+        "known",
+      )
+
+    record_response.status |> should.equal(400)
   })
 
   remaining_names(connection) |> should.equal([])
