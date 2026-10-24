@@ -61,7 +61,10 @@ pub fn handle(request, connection, index_html, default_theme) {
 
   case wisp.path_segments(request) {
     [] -> wisp.html_response(index_html, 200)
-    ["heart-beat"] -> wisp.html_response("alive", 200)
+    ["heart-beat"] ->
+      wisp.ok()
+      |> response.set_header("Content-Type", "text/plain; charset=utf-8")
+      |> wisp.string_body("alive")
     ["get", "@" <> name] -> {
       use counter <- with_counter(connection, name)
 
