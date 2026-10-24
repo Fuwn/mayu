@@ -71,7 +71,6 @@ Mayu is configured through environment variables, all of which are optional.
 | `PORT` | Port the server listens on. Defaults to `3000`. |
 | `MAYU_DATABASE_URL` | A `postgres://` or `postgresql://` URL, e.g. `postgres://mayu:secret@localhost:5432/mayu`. When unset, Mayu uses the SQLite file at `data/count.db`. |
 | `MAYU_THEMES` | Comma-separated allowlist of themes to load, e.g. `asoul,garukura`. When unset, every theme is loaded. Restricting it lowers memory use and caps the maximum response size. |
-| `MAYU_VERSION` | Version string shown on the index page. Set automatically by the Docker image. |
 | `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
 | `MAYU_PRUNE_AFTER_DAYS` | Counters not incremented within this many days are eligible for pruning. |
 | `MAYU_PRUNE_EVERY_HOURS` | How often, in hours, the prune sweep runs. |

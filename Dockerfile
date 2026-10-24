@@ -45,16 +45,13 @@ WORKDIR /mayu
 COPY --from=build /mayu/build/erlang-shipment/ ./erlang-shipment/
 COPY --from=build /mayu/themes/ ./themes/
 COPY index.html ./
-COPY gleam.toml ./
 
-RUN grep '^version' gleam.toml | cut -d '"' -f 2 > .mayu-version \
-    && rm gleam.toml \
-    && adduser -D -H mayu \
+RUN adduser -D -H mayu \
     && mkdir data \
     && chown mayu /mayu/data
 
 USER mayu
 
-ENTRYPOINT ["sh", "-c", "exec env MAYU_VERSION=\"$(cat /mayu/.mayu-version)\" /mayu/erlang-shipment/entrypoint.sh \"$@\"", "--"]
+ENTRYPOINT ["/mayu/erlang-shipment/entrypoint.sh"]
 
 CMD ["run"]

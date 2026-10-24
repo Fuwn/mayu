@@ -42,6 +42,9 @@ with ThreadPoolExecutor(max_workers=20) as executor:
 assert counts == list(range(3, 23)), counts
 
 with urllib.request.urlopen(base_url + "/", timeout=10) as response:
-    assert b"{{" not in response.read()
+    homepage = response.read()
+
+    assert b"{{" not in homepage
+    assert b"(v" in homepage
 
 print("Packaged startup, assets, and concurrent increments passed")

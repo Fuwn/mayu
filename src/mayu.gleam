@@ -23,14 +23,10 @@ pub fn main() {
   cache.store(image_cache)
 
   let default_theme = cache.default_theme(image_cache)
-  let version_tag =
-    envoy.get("MAYU_VERSION")
-    |> result.map(fn(version) { "(v" <> wisp.escape_html(version) <> ")" })
-    |> result.unwrap("")
   let assert Ok(index_html_source) = simplifile.read("index.html")
   let index_html =
     index_html_source
-    |> string.replace("{{ MAYU_VERSION }}", version_tag)
+    |> string.replace("{{ VERSION }}", "(v" <> version() <> ")")
     |> string.replace(
       "{{ THEME_OPTIONS }}",
       theme_options(image_cache, default_theme),
@@ -60,6 +56,9 @@ pub fn main() {
 
   process.sleep_forever()
 }
+
+@external(erlang, "mayu_ffi", "version")
+fn version() -> String
 
 // A postgres:// URL in MAYU_DATABASE_URL selects Postgres; otherwise the
 // counter lives in the local SQLite file.
