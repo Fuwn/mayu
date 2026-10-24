@@ -30,21 +30,21 @@ pub fn main() {
       database.setup(database.Postgres(connection))
 
       let assert Ok(counter) =
-        database.get_counter(database.Postgres(connection), "legacy")
+        database.increment(database.Postgres(connection), "legacy")
       let assert Ok(next_counter) =
-        database.get_counter(database.Postgres(connection), "legacy")
+        database.increment(database.Postgres(connection), "legacy")
 
-      counter.num |> should.equal(42)
+      counter.count |> should.equal(42)
       counter.created_at |> should.equal("")
       counter.updated_at |> should.not_equal("")
-      next_counter.num |> should.equal(43)
+      next_counter.count |> should.equal(43)
       execute(
         connection,
         "update tb_count set num = 2147483647 where name = 'legacy'",
       )
 
       let assert Ok(large_counter) =
-        database.get_counter(database.Postgres(connection), "legacy")
+        database.increment(database.Postgres(connection), "legacy")
       let assert Ok(pog.Returned(_, column_types)) =
         pog.query(
           "select attname, atttypid::regtype::text from pg_attribute where attrelid = 'tb_count'::regclass and attname in ('id', 'num') order by attname",
@@ -63,7 +63,7 @@ pub fn main() {
         |> pog.returning(decode.at([0], decode.int))
         |> pog.execute(connection)
 
-      large_counter.num |> should.equal(2_147_483_648)
+      large_counter.count |> should.equal(2_147_483_648)
       column_types |> should.equal([#("id", "bigint"), #("num", "bigint")])
       sequence_maximums |> should.equal([9_223_372_036_854_775_807])
       execute(

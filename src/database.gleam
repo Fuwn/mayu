@@ -14,7 +14,7 @@ pub type Database {
 }
 
 pub type Counter {
-  Counter(name: String, num: Int, created_at: String, updated_at: String)
+  Counter(name: String, count: Int, created_at: String, updated_at: String)
 }
 
 // SQLite's datetime('now') renders UTC as 'YYYY-MM-DD HH:MM:SS'; this
@@ -131,28 +131,21 @@ fn existing_columns(connection) -> List(String) {
   columns
 }
 
-pub fn get_counter(database: Database, name) {
-  case name {
-    "demo" -> Ok(Counter("demo", 1_234_567_890, "", ""))
-    _ -> increment_counter(database, name)
-  }
-}
-
 fn counter_decoder() -> decode.Decoder(Counter) {
   use name <- decode.field(0, decode.string)
-  use hit_count <- decode.field(1, decode.int)
+  use count <- decode.field(1, decode.int)
   use created_at <- decode.field(2, decode.optional(decode.string))
   use updated_at <- decode.field(3, decode.optional(decode.string))
 
   decode.success(Counter(
     name,
-    hit_count,
+    count,
     option.unwrap(created_at, ""),
     option.unwrap(updated_at, ""),
   ))
 }
 
-fn increment_counter(database, name) {
+pub fn increment(database: Database, name) -> Result(Counter, Nil) {
   case database {
     Sqlite(connection) -> increment_sqlite(connection, name)
     Postgres(connection) -> increment_postgres(connection, name)
@@ -198,10 +191,10 @@ fn increment_postgres(connection, name) {
   }
 }
 
-fn report_query_failure(detail: String) {
+fn report_query_failure(detail: String) -> Result(Counter, Nil) {
   wisp.log_error("Database query failed: " <> detail)
 
-  Error("Database operation failed")
+  Error(Nil)
 }
 
 pub fn prune(

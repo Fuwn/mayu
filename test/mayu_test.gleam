@@ -40,7 +40,7 @@ pub fn setup_migrates_legacy_moe_counter_table_test() {
   database.setup(database.Sqlite(connection))
 
   let assert Ok(counter) =
-    database.get_counter(database.Sqlite(connection), "legacy")
+    database.increment(database.Sqlite(connection), "legacy")
   let assert Ok(index_counts) =
     sqlight.query(
       "select count(*) from pragma_index_list('tb_count');",
@@ -49,7 +49,7 @@ pub fn setup_migrates_legacy_moe_counter_table_test() {
       expecting: decode.at([0], decode.int),
     )
 
-  counter.num |> should.equal(42)
+  counter.count |> should.equal(42)
   counter.created_at |> should.equal("")
   counter.updated_at |> should.not_equal("")
   index_counts |> should.equal([2])
@@ -257,11 +257,15 @@ pub fn demo_never_creates_a_database_row_test() {
   use connection <- sqlight.with_connection(":memory:")
 
   database.setup(database.Sqlite(connection))
-
-  let assert Ok(counter) =
-    database.get_counter(database.Sqlite(connection), "demo")
-
-  counter.num |> should.equal(1_234_567_890)
+  request.handle(
+    simulate.request(http.Get, "/record/@demo"),
+    database.Sqlite(connection),
+    "index",
+    "known",
+  )
+  |> simulate.read_body
+  |> json.parse(decode.at(["num"], decode.int))
+  |> should.equal(Ok(1_234_567_890))
   remaining_names(connection) |> should.equal([])
 }
 

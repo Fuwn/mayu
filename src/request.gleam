@@ -14,6 +14,8 @@ const maximum_padding = 12
 
 const maximum_name_length = 64
 
+const demo_counter = database.Counter("demo", 1_234_567_890, "", "")
+
 fn middleware(request, handle) {
   use <- wisp.log_request(request)
   use <- wisp.rescue_crashes
@@ -32,7 +34,12 @@ fn require_valid_name(name, continue) {
 fn with_counter(connection, name, respond) {
   use <- require_valid_name(name)
 
-  case database.get_counter(connection, name) {
+  let counter = case name {
+    "demo" -> Ok(demo_counter)
+    _ -> database.increment(connection, name)
+  }
+
+  case counter {
     Ok(counter) -> respond(counter)
     Error(_) -> wisp.internal_server_error()
   }
@@ -69,7 +76,7 @@ pub fn handle(request, connection, index_html, default_theme) {
       |> wisp.string_tree_body(svg.xml(
         query_theme(query, default_theme),
         default_theme,
-        counter.num,
+        counter.count,
         query_padding(query),
       ))
     }
@@ -80,7 +87,7 @@ pub fn handle(request, connection, index_html, default_theme) {
         json.to_string(
           json.object([
             #("name", json.string(counter.name)),
-            #("num", json.int(counter.num)),
+            #("num", json.int(counter.count)),
             #("updated_at", json.string(counter.updated_at)),
             #("created_at", json.string(counter.created_at)),
           ]),
