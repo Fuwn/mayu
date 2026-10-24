@@ -6,9 +6,10 @@ Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Mo
 serves the same counter routes and reads Moe-Counter's existing SQLite database.
 
 Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
-counts. Limited to one CPU, Mayu served 3,908 counter images per second while saving every hit.
-Moe-Counter served 317 per second when it also saved every hit. Mayu's compressed Docker image is
-66 MB, and Moe-Counter's is 84 MB.
+counts. On one CPU, Mayu served 4,165 SVG counters per second while saving every hit. Moe-Counter
+served 317 per second when it also saved every hit. With every theme loaded, an idle Mayu container
+uses 45 MiB of memory. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's
+Docker image is 66 MB compressed, and Moe-Counter's is 84 MB.
 
 Mayu is written in [Gleam](https://gleam.run) and stores counters in [SQLite](https://sqlite.org)
 or [PostgreSQL](https://www.postgresql.org).
