@@ -6,8 +6,8 @@ import gleam/string
 import gleam/string_tree.{type StringTree}
 import theme
 
-type XmlImages {
-  XmlImages(xml: StringTree, width: Int, height: Int)
+type RenderedGlyphs {
+  RenderedGlyphs(elements: StringTree, width: Int, height: Int)
 }
 
 fn append_image(image_elements, cached_image: theme.CachedImage, x_offset) {
@@ -17,18 +17,22 @@ fn append_image(image_elements, cached_image: theme.CachedImage, x_offset) {
   |> string_tree.append(cached_image.element_suffix)
 }
 
-fn images(glyph_images, glyphs) -> XmlImages {
-  list.fold(glyphs, XmlImages(string_tree.new(), 0, 0), fn(accumulator, glyph) {
-    case dict.get(glyph_images, glyph) {
-      Ok(cached_image) ->
-        XmlImages(
-          append_image(accumulator.xml, cached_image, accumulator.width),
-          accumulator.width + cached_image.width,
-          int.max(accumulator.height, cached_image.height),
-        )
-      Error(_) -> accumulator
-    }
-  })
+fn render_glyphs(glyph_images, glyphs) -> RenderedGlyphs {
+  list.fold(
+    glyphs,
+    RenderedGlyphs(string_tree.new(), 0, 0),
+    fn(accumulator, glyph) {
+      case dict.get(glyph_images, glyph) {
+        Ok(cached_image) ->
+          RenderedGlyphs(
+            append_image(accumulator.elements, cached_image, accumulator.width),
+            accumulator.width + cached_image.width,
+            int.max(accumulator.height, cached_image.height),
+          )
+        Error(_) -> accumulator
+      }
+    },
+  )
 }
 
 fn pad_digits(number, padding) -> List(Int) {
@@ -61,15 +65,15 @@ fn theme_images(
 pub fn xml(theme_name, fallback_theme_name, number, padding) {
   let glyph_images =
     theme_images(theme.read_cache(), theme_name, fallback_theme_name)
-  let rendered_images = images(glyph_images, glyphs(number, padding))
+  let rendered_glyphs = render_glyphs(glyph_images, glyphs(number, padding))
 
   string_tree.from_string(
-    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><svg height=\""
-    <> int.to_string(rendered_images.height)
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg height=\""
+    <> int.to_string(rendered_glyphs.height)
     <> "\" style=\"image-rendering: pixelated;\" version=\"1.1\" width=\""
-    <> int.to_string(rendered_images.width)
+    <> int.to_string(rendered_glyphs.width)
     <> "\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Mayu</title><g>",
   )
-  |> string_tree.append_tree(rendered_images.xml)
+  |> string_tree.append_tree(rendered_glyphs.elements)
   |> string_tree.append("</g></svg>")
 }
