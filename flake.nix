@@ -1,54 +1,25 @@
 {
   description = "Moe-Counter Compatible Website Hit Counter";
 
-  inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-    nix-gleam.url = "github:arnarg/nix-gleam";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    gitignore = {
-      url = "github:hercules-ci/gitignore.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
+    { nixpkgs, ... }:
     {
-      flake-utils,
-      gitignore,
-      nix-gleam,
-      nixpkgs,
-      self,
-      ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        inherit (gitignore.lib) gitignoreSource;
-
-        packages = import nixpkgs { inherit system; };
-        inherit (packages.callPackage "${nix-gleam}/builder" { }) buildGleamApplication;
-      in
-      {
-        packages = {
-          default = buildGleamApplication {
-            src = gitignoreSource ./.;
-
-            rebar3Package = packages.rebar3WithPlugins {
-              plugins = with packages.beamPackages; [ pc ];
-            };
+      devShells = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed (
+        system:
+        let
+          packages = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = packages.mkShell {
+            buildInputs = with packages; [
+              gleam
+              rebar3
+              erlang
+            ];
           };
-
-          mayu = self.packages.${system}.default;
-        };
-
-        devShells.default = packages.mkShell {
-          buildInputs = with packages; [
-            gleam
-            rebar3
-            erlang
-          ];
-        };
-      }
-    );
+        }
+      );
+    };
 }

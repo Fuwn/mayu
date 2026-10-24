@@ -46,12 +46,3 @@ jobs:
         run: docker logs mayu-check
       - if: always()
         run: docker rm -f mayu-check
-  nix:
-    strategy:
-      matrix:
-        runner: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      - run: nix build --no-link

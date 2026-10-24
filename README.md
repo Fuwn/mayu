@@ -38,9 +38,9 @@ Mayu will pad the counter number with zeroes until it reaches a length of 6 char
 $ git clone git@github.com:Fuwn/mayu.git
 $ cd mayu
 $ gleam run
-$ # or
-$ nix run
 ```
+
+With Nix, `nix develop` provides the Gleam, Erlang, and rebar3 toolchain.
 
 ### Docker
 
@@ -92,7 +92,7 @@ they use a temporary schema inside a transaction that is rolled back afterwards.
 
 `python3 test/http_smoke.py http://localhost:3000` checks a running test instance, including
 concurrent increments. It creates a counter, so use a disposable database. CI runs it
-against the built container and also checks the Nix build on Linux and macOS.
+against the built container.
 
 ## Resource Attributions
 
