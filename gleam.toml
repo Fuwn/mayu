@@ -1,6 +1,3 @@
-# For a full reference of all the available options, you can have a look at
-# https://gleam.run/writing-gleam/gleam-toml/.
-
 name = "mayu"
 version = "0.1.29"
 gleam = ">= 1.14.0"
