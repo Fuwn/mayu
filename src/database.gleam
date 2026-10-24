@@ -120,11 +120,7 @@ fn existing_columns(connection) -> List(String) {
       "pragma table_info('tb_count');",
       on: connection,
       with: [],
-      expecting: {
-        use name <- decode.field(1, decode.string)
-
-        decode.success(name)
-      },
+      expecting: decode.at([1], decode.string),
     )
 
   columns
