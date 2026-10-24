@@ -79,12 +79,8 @@ fn with_database(continue: fn(database.Database) -> a) -> a {
 
           continue(database.Postgres(pool.data))
         }
-        Error(_) -> {
-          wisp.log_error(
-            "Invalid MAYU_DATABASE_URL: expected a postgres:// URL",
-          )
-          panic as "invalid database url"
-        }
+        Error(_) ->
+          panic as "Invalid MAYU_DATABASE_URL: expected a postgres:// URL"
       }
     }
     Error(_) -> {
@@ -100,13 +96,11 @@ fn with_database(continue: fn(database.Database) -> a) -> a {
 fn ensure_data_directory() -> Nil {
   case simplifile.create_directory("./data") {
     Ok(_) | Error(simplifile.Eexist) -> Nil
-    Error(error) -> {
-      wisp.log_error(
+    Error(error) ->
+      panic as {
         "Failed to create ./data directory: "
-        <> simplifile.describe_error(error),
-      )
-      panic as "cannot create data directory"
-    }
+        <> simplifile.describe_error(error)
+      }
   }
 }
 
