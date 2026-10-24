@@ -1,5 +1,4 @@
 import gleam/dynamic/decode
-import gleam/int
 import gleam/list
 import gleam/option
 import gleam/result
@@ -204,20 +203,29 @@ pub fn prune(
 ) -> Nil {
   let result = case database {
     Sqlite(connection) ->
-      sqlight.exec("delete from tb_count
-         where num < " <> int.to_string(minimum_count) <> "
+      sqlight.query(
+        "delete from tb_count
+         where num < ?1
            and updated_at is not null
-           and updated_at < datetime('now', '-" <> int.to_string(
-        maximum_age_days,
-      ) <> " days');", connection)
+           and updated_at < datetime('now', '-' || ?2 || ' days');",
+        on: connection,
+        with: [sqlight.int(minimum_count), sqlight.int(maximum_age_days)],
+        expecting: decode.success(Nil),
+      )
+      |> result.replace(Nil)
       |> result.map_error(string.inspect)
     Postgres(connection) ->
-      pog.query("delete from tb_count
-         where num < " <> int.to_string(minimum_count) <> "
+      pog.query(
+        "delete from tb_count
+         where num < $1
            and updated_at is not null
-           and updated_at < to_char(now() at time zone 'utc' - make_interval(days => " <> int.to_string(
-        maximum_age_days,
-      ) <> "), 'YYYY-MM-DD HH24:MI:SS');")
+           and updated_at < to_char(
+             now() at time zone 'utc' - make_interval(days => $2),
+             'YYYY-MM-DD HH24:MI:SS'
+           );",
+      )
+      |> pog.parameter(pog.int(minimum_count))
+      |> pog.parameter(pog.int(maximum_age_days))
       |> pog.execute(connection)
       |> result.replace(Nil)
       |> result.map_error(string.inspect)
