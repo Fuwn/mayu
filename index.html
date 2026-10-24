@@ -70,7 +70,6 @@
       }
 
       ::placeholder {
-        /* color: #9fadbd; */
         color: rgb(114, 138, 161);
       }
 
@@ -84,24 +83,16 @@
         background-size: 1.25em;
       }
 
+      input:focus,
       select:focus {
-        outline: none;
-      }
-
-      input:focus {
         outline: none;
       }
 
       .label {
         margin-top: -10px;
-        padding-bottom: 0px;
         font-size: 0.9rem;
         color: rgb(114, 138, 161);
         font-weight: normal;
-      }
-
-      pre {
-        font-family: monospace;
       }
 
       .copy-codes {
@@ -134,10 +125,6 @@
         left: 35.4px;
       }
 
-      .attribution-2 {
-        display: none;
-      }
-
       .counter {
         display: flex;
         flex-direction: column;
@@ -148,19 +135,12 @@
         main {
           flex-direction: column;
           gap: 40px;
-        }
-
-        .attribution-1 {
-          display: none;
-        }
-
-        .attribution-2 {
-          display: block;
+          padding: 10px 17.7px;
         }
 
         .attribution {
           position: unset;
-          margin-top: 40px;
+          margin-top: 0;
         }
 
         select {
@@ -196,12 +176,6 @@
         margin-top: 20px;
         margin-bottom: -10px;
       }
-
-      @media (max-width: 768px) {
-        main {
-          padding: 10px 17.7px;
-        }
-      }
     </style>
 
     <main>
@@ -224,17 +198,6 @@
         <select id="themeSelect" aria-label="Theme">
           {{ THEME_OPTIONS }}
         </select>
-
-        <p class="attribution attribution-1">
-          Created by
-          <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
-
-          <br />
-
-          Source code available on
-          <a href="https://github.com/Fuwn/mayu" target="_blank">GitHub</a>
-          {{ VERSION }}
-        </p>
       </div>
 
       <div class="counter">
@@ -251,18 +214,18 @@
         </p>
 
         <pre id="copy-codes" class="copy-codes"></pre>
-
-        <p class="attribution attribution-2">
-          Created by
-          <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
-
-          <br />
-
-          Source code available on
-          <a href="https://github.com/Fuwn/mayu" target="_blank">GitHub</a>
-          {{ VERSION }}
-        </p>
       </div>
+
+      <p class="attribution">
+        Created by
+        <a href="https://anilist.co/user/fuwn/" target="_blank">@Fuwn</a>
+
+        <br />
+
+        Source code available on
+        <a href="https://github.com/Fuwn/mayu" target="_blank">GitHub</a>
+        {{ VERSION }}
+      </p>
     </main>
 
     <img src="" alt="Mascot" class="mascot" title="Mascot" />
@@ -377,12 +340,7 @@
         mascot.title = randomMascot.name;
 
         mascot.classList.add("loaded");
-
-        if (mascotMediaQuery.removeEventListener) {
-          mascotMediaQuery.removeEventListener("change", loadMascot);
-        } else {
-          mascotMediaQuery.removeListener(loadMascot);
-        }
+        mascotMediaQuery.removeEventListener("change", loadMascot);
       };
 
       updateCounter();
@@ -392,13 +350,7 @@
         inputTimeout = setTimeout(updateCounter, 500);
       });
       themeSelect.addEventListener("change", updateCounter);
-
-      if (mascotMediaQuery.addEventListener) {
-        mascotMediaQuery.addEventListener("change", loadMascot);
-      } else {
-        mascotMediaQuery.addListener(loadMascot);
-      }
-
+      mascotMediaQuery.addEventListener("change", loadMascot);
       loadMascot();
     </script>
   </body>
