@@ -1,16 +1,16 @@
-import cache
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
 import gleam/string_tree.{type StringTree}
+import theme
 
 type XmlImages {
   XmlImages(xml: StringTree, width: Int, height: Int)
 }
 
-fn append_image(image_elements, cached_image: cache.CachedImage, x_offset) {
+fn append_image(image_elements, cached_image: theme.CachedImage, x_offset) {
   image_elements
   |> string_tree.append(cached_image.element_prefix)
   |> string_tree.append(int.to_string(x_offset))
@@ -41,25 +41,26 @@ fn pad_digits(number, padding) -> List(Int) {
 }
 
 fn glyphs(number, padding) {
-  let digits = list.map(pad_digits(number, padding), cache.Digit)
+  let digits = list.map(pad_digits(number, padding), theme.Digit)
 
-  [cache.Start, ..list.append(digits, [cache.End])]
+  [theme.Start, ..list.append(digits, [theme.End])]
 }
 
 fn theme_images(
   image_cache,
-  theme,
-  fallback_theme,
-) -> Dict(cache.Glyph, cache.CachedImage) {
-  case dict.get(image_cache, theme) {
+  theme_name,
+  fallback_theme_name,
+) -> Dict(theme.Glyph, theme.CachedImage) {
+  case dict.get(image_cache, theme_name) {
     Ok(glyph_images) -> glyph_images
     Error(_) ->
-      dict.get(image_cache, fallback_theme) |> result.unwrap(dict.new())
+      dict.get(image_cache, fallback_theme_name) |> result.unwrap(dict.new())
   }
 }
 
-pub fn xml(theme, fallback_theme, number, padding) {
-  let glyph_images = theme_images(cache.read(), theme, fallback_theme)
+pub fn xml(theme_name, fallback_theme_name, number, padding) {
+  let glyph_images =
+    theme_images(theme.read_cache(), theme_name, fallback_theme_name)
   let rendered_images = images(glyph_images, glyphs(number, padding))
 
   string_tree.from_string(

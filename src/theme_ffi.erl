@@ -1,4 +1,4 @@
--module(cache_ffi).
+-module(theme_ffi).
 
 -export([store/1, read/0]).
 

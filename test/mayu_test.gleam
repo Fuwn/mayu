@@ -1,4 +1,3 @@
-import cache
 import database
 import gleam/dict
 import gleam/dynamic/decode
@@ -13,6 +12,7 @@ import gleeunit/should
 import request
 import sqlight
 import svg
+import theme
 import wisp/simulate
 
 pub fn main() {
@@ -140,15 +140,15 @@ fn remaining_names(connection) -> List(String) {
   names
 }
 
-fn theme_cache(theme, glyphs) {
+fn theme_cache(theme_name, glyphs) {
   dict.from_list([
     #(
-      theme,
+      theme_name,
       glyphs
         |> list.map(fn(glyph) {
           #(
             glyph,
-            cache.CachedImage(
+            theme.CachedImage(
               element_prefix: "<image data-glyph=\""
                 <> string.inspect(glyph)
                 <> "\" x=\"",
@@ -164,20 +164,20 @@ fn theme_cache(theme, glyphs) {
 }
 
 const digit_glyphs = [
-  cache.Digit(0),
-  cache.Digit(1),
-  cache.Digit(2),
-  cache.Digit(3),
-  cache.Digit(4),
-  cache.Digit(5),
-  cache.Digit(6),
-  cache.Digit(7),
-  cache.Digit(8),
-  cache.Digit(9),
+  theme.Digit(0),
+  theme.Digit(1),
+  theme.Digit(2),
+  theme.Digit(3),
+  theme.Digit(4),
+  theme.Digit(5),
+  theme.Digit(6),
+  theme.Digit(7),
+  theme.Digit(8),
+  theme.Digit(9),
 ]
 
 pub fn xml_falls_back_to_the_default_theme_test() {
-  cache.store(theme_cache("known", digit_glyphs))
+  theme.store_cache(theme_cache("known", digit_glyphs))
 
   let rendered_image =
     svg.xml("does-not-exist", "known", 7, 3) |> string_tree.to_string
@@ -187,7 +187,7 @@ pub fn xml_falls_back_to_the_default_theme_test() {
 }
 
 pub fn xml_renders_nothing_for_a_theme_missing_from_every_cache_test() {
-  cache.store(theme_cache("known", digit_glyphs))
+  theme.store_cache(theme_cache("known", digit_glyphs))
 
   svg.xml("does-not-exist", "also-missing", 7, 3)
   |> string_tree.to_string
@@ -197,7 +197,7 @@ pub fn xml_renders_nothing_for_a_theme_missing_from_every_cache_test() {
 
 pub fn default_theme_prefers_a_loaded_theme_over_the_preferred_name_test() {
   theme_cache("gelbooru-h", digit_glyphs)
-  |> cache.default_theme
+  |> theme.default_name
   |> should.equal("gelbooru-h")
 }
 
@@ -205,7 +205,7 @@ pub fn request_counts_hits_and_preserves_encoded_names_test() {
   use connection <- sqlight.with_connection(":memory:")
 
   database.setup(database.Sqlite(connection))
-  cache.store(theme_cache("known", digit_glyphs))
+  theme.store_cache(theme_cache("known", digit_glyphs))
 
   let image_response =
     request.handle(
@@ -270,7 +270,9 @@ pub fn demo_never_creates_a_database_row_test() {
 }
 
 pub fn xml_preserves_glyph_order_padding_and_bookends_test() {
-  cache.store(theme_cache("known", [cache.Start, cache.End, ..digit_glyphs]))
+  theme.store_cache(
+    theme_cache("known", [theme.Start, theme.End, ..digit_glyphs]),
+  )
 
   let rendered_image = svg.xml("known", "known", 12, 3) |> string_tree.to_string
 

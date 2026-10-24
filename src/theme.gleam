@@ -5,7 +5,6 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
-import image
 import simplifile
 import wisp
 
@@ -24,16 +23,26 @@ pub type Glyph {
   End
 }
 
-pub type ThemeCache =
+pub type Cache =
   Dict(String, Dict(Glyph, CachedImage))
 
-@external(erlang, "cache_ffi", "store")
-pub fn store(cache: ThemeCache) -> Nil
+type ImageInformation {
+  ImageInformation(width: Int, height: Int, extension: String)
+}
 
-@external(erlang, "cache_ffi", "read")
-pub fn read() -> ThemeCache
+@external(erlang, "theme_ffi", "store")
+pub fn store_cache(cache: Cache) -> Nil
 
-pub fn load_themes() {
+@external(erlang, "theme_ffi", "read")
+pub fn read_cache() -> Cache
+
+/// Adult theme variants end in `-h`; the homepage picker lists them only when
+/// one is the default theme.
+pub fn is_hidden(theme) -> Bool {
+  string.ends_with(theme, "-h")
+}
+
+pub fn load_all() -> Cache {
   let enabled_themes =
     envoy.get("MAYU_THEMES")
     |> result.unwrap("")
@@ -155,7 +164,7 @@ fn load_cached_image(path) {
     }),
   )
   use image_information <- result.map(
-    image.get_image_information(image_data)
+    image_information(image_data)
     |> result.map_error(fn(error) {
       wisp.log_error("Failed to load image " <> path <> ": " <> error)
     }),
@@ -164,9 +173,33 @@ fn load_cached_image(path) {
   cached_image(image_data, image_information)
 }
 
+fn image_information(image) -> Result(ImageInformation, String) {
+  case image {
+    <<
+      0x89,
+      "PNG\r\n":utf8,
+      0x1A,
+      "\n":utf8,
+      _length:32,
+      "IHDR":utf8,
+      width:32,
+      height:32,
+      _rest:bits,
+    >> -> Ok(ImageInformation(width, height, "png"))
+    <<
+      "GIF":utf8,
+      _version:bytes-3,
+      width:little-16,
+      height:little-16,
+      _rest:bits,
+    >> -> Ok(ImageInformation(width, height, "gif"))
+    _ -> Error("Unsupported image format")
+  }
+}
+
 fn cached_image(
   image_data,
-  image_information: image.ImageInformation,
+  image_information: ImageInformation,
 ) -> CachedImage {
   CachedImage(
     element_prefix: "<image height=\""
@@ -186,7 +219,7 @@ fn cached_image(
 
 const preferred_default_theme = "asoul"
 
-pub fn default_theme(cache) -> String {
+pub fn default_name(cache: Cache) -> String {
   let names =
     cache
     |> dict.keys
@@ -196,7 +229,7 @@ pub fn default_theme(cache) -> String {
     True -> preferred_default_theme
     False ->
       names
-      |> list.filter(fn(name) { !string.ends_with(name, "-h") })
+      |> list.filter(fn(name) { !is_hidden(name) })
       |> list.first
       |> result.or(list.first(names))
       |> result.unwrap(preferred_default_theme)

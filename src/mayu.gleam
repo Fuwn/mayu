@@ -1,4 +1,3 @@
-import cache
 import database
 import envoy
 import gleam/dict
@@ -12,17 +11,18 @@ import pog
 import request
 import simplifile
 import sqlight
+import theme
 import wisp
 import wisp/wisp_mist
 
 pub fn main() {
   wisp.configure_logger()
 
-  let image_cache = cache.load_themes()
+  let image_cache = theme.load_all()
 
-  cache.store(image_cache)
+  theme.store_cache(image_cache)
 
-  let default_theme = cache.default_theme(image_cache)
+  let default_theme = theme.default_name(image_cache)
   let assert Ok(index_html_source) = simplifile.read("index.html")
   let index_html =
     index_html_source
@@ -186,9 +186,7 @@ fn positive_environment_integer(name) -> Result(Int, Nil) {
 fn theme_options(image_cache, default_theme) {
   image_cache
   |> dict.keys
-  |> list.filter(fn(slug) {
-    slug == default_theme || !string.ends_with(slug, "-h")
-  })
+  |> list.filter(fn(slug) { slug == default_theme || !theme.is_hidden(slug) })
   |> list.sort(string.compare)
   |> list.map(fn(slug) { theme_option(slug, default_theme) })
   |> string.join("\n")
