@@ -1,4 +1,5 @@
 import database
+import gleam/http
 import gleam/http/response
 import gleam/int
 import gleam/json
@@ -33,7 +34,10 @@ fn require_valid_name(name, continue) {
   }
 }
 
-fn with_counter(connection, name, respond) {
+// Wisp has already turned HEAD into GET here, so HEAD counts as a hit; other
+// methods are rejected before they can increment.
+fn with_counter(request, connection, name, respond) {
+  use <- wisp.require_method(request, http.Get)
   use <- require_valid_name(name)
 
   let counter = case name {
@@ -60,7 +64,7 @@ fn query_padding(query) -> Int {
 }
 
 pub fn handle(request, connection, index_html, default_theme) {
-  use _ <- middleware(request)
+  use request <- middleware(request)
 
   case wisp.path_segments(request) {
     [] -> wisp.html_response(index_html, 200)
@@ -69,7 +73,7 @@ pub fn handle(request, connection, index_html, default_theme) {
       |> response.set_header("Content-Type", "text/plain; charset=utf-8")
       |> wisp.string_body("alive")
     ["get", "@" <> name] -> {
-      use counter <- with_counter(connection, name)
+      use counter <- with_counter(request, connection, name)
 
       let query = wisp.get_query(request)
 
@@ -83,7 +87,7 @@ pub fn handle(request, connection, index_html, default_theme) {
       ))
     }
     ["record", "@" <> name] -> {
-      use counter <- with_counter(connection, name)
+      use counter <- with_counter(request, connection, name)
 
       wisp.json_response(
         json.to_string(

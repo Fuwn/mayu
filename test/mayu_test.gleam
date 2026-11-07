@@ -252,6 +252,33 @@ pub fn request_rejects_invalid_names_without_creating_rows_test() {
   remaining_names(connection) |> should.equal([])
 }
 
+pub fn request_counts_head_and_rejects_other_methods_test() {
+  use connection <- sqlight.with_connection(":memory:")
+
+  database.setup(database.Sqlite(connection))
+
+  let rejected_statuses =
+    list.map([http.Post, http.Put, http.Delete], fn(method) {
+      request.handle(
+        simulate.request(method, "/record/@methods"),
+        database.Sqlite(connection),
+        "index",
+        "known",
+      ).status
+    })
+  let head_response =
+    request.handle(
+      simulate.request(http.Head, "/record/@counted"),
+      database.Sqlite(connection),
+      "index",
+      "known",
+    )
+
+  rejected_statuses |> should.equal([405, 405, 405])
+  head_response.status |> should.equal(200)
+  remaining_names(connection) |> should.equal(["counted"])
+}
+
 pub fn demo_never_creates_a_database_row_test() {
   use connection <- sqlight.with_connection(":memory:")
 
