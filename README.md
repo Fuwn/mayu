@@ -8,7 +8,7 @@ serves the same counter routes and reads Moe-Counter's existing SQLite database.
 Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
 counts. On one CPU, Mayu served 4,165 SVG counters per second while saving every hit. Moe-Counter
 served 317 per second when it also saved every hit. With every theme loaded, an idle Mayu container
-uses 45 MiB of memory. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's
+uses 36 MiB of memory. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's
 Docker image is 66 MB compressed, and Moe-Counter's is 84 MB.
 
 Mayu is written in [Gleam](https://gleam.run) and stores counters in [SQLite](https://sqlite.org)

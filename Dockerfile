@@ -53,8 +53,15 @@ RUN adduser -D -H mayu \
 USER mayu
 
 # The default process table reserves room for about a million processes, and
-# per-scheduler allocators add more fixed overhead. Together these flags cut
-# idle memory from about 72 MiB to 45 MiB without lowering measured throughput.
+# per-scheduler allocators add more fixed overhead; +P and +Mea min trim both.
+# The BEAM also starts 15 normal, 15 dirty CPU, and 10 dirty I/O schedulers
+# whatever the CPU limit, and idle schedulers busy-wait, which burns a small
+# CPU quota and gets the container throttled. +S, +SDcpu, and +SDio start one
+# of each, and the +sbwt flags stop the busy-waiting. These scheduler flags cap
+# Mayu at one CPU, so raise them when giving the container more. On one CPU
+# with every theme loaded, they cut idle memory from 45 MiB to 36 MiB, raised
+# saved hits from about 4,800 to 7,500 per second, and cut p99 latency from
+# about 49 ms to 18 ms.
 ENV ERL_FLAGS="+P 262144 +Mea min +S 1:1 +SDcpu 1:1 +SDio 1 +sbwt none +sbwtdcpu none +sbwtdio none"
 
 ENTRYPOINT ["/mayu/erlang-shipment/entrypoint.sh"]
