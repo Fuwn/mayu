@@ -14,9 +14,11 @@
         {
           default = packages.mkShell {
             buildInputs = with packages; [
-              gleam
-              rebar3
-              erlang
+              crystal
+              shards
+              sqlite
+              openssl
+              pkg-config
             ];
           };
         }

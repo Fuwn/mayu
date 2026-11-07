@@ -6,13 +6,12 @@ Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Mo
 serves the same counter routes and reads Moe-Counter's existing SQLite database.
 
 Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
-counts. On one CPU, Mayu served 4,165 SVG counters per second while saving every hit. Moe-Counter
-served 317 per second when it also saved every hit. With every theme loaded, an idle Mayu container
-uses 36 MiB of memory. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's
-Docker image is 66 MB compressed, and Moe-Counter's is 84 MB.
+counts. With every theme loaded, an idle Mayu container uses 23 MiB of memory. An idle container
+from Moe-Counter's official image uses 90 MiB. Mayu's Docker image is 23 MB compressed, and
+Moe-Counter's is 84 MB.
 
-Mayu is written in [Gleam](https://gleam.run) and stores counters in [SQLite](https://sqlite.org)
-or [PostgreSQL](https://www.postgresql.org).
+Mayu is written in [Crystal](https://crystal-lang.org) and stores counters in
+[SQLite](https://sqlite.org) or [PostgreSQL](https://www.postgresql.org).
 
 <br>
 
@@ -44,10 +43,12 @@ request changes this, up to a maximum of 12.
 ```bash
 $ git clone git@github.com:Fuwn/mayu.git
 $ cd mayu
-$ gleam run
+$ shards install
+$ shards build
+$ ./bin/mayu
 ```
 
-With Nix, `nix develop` provides the Gleam, Erlang, and rebar3 toolchain.
+Building needs Crystal and the SQLite development headers. With Nix, `nix develop` provides them.
 
 ### Docker
 
@@ -67,7 +68,9 @@ In the Docker image, that is `/mayu/data/count.db`.
 
 To use PostgreSQL instead, set `MAYU_DATABASE_URL` to a `postgres://` or `postgresql://` URL, for
 example `postgres://mayu:secret@localhost:5432/mayu`. Add `?sslmode=require` if your provider
-requires TLS. Mayu creates its table on start-up, so an empty database is enough.
+requires TLS. Mayu encrypts the connection but does not verify the server's certificate, so it
+refuses to start with `sslmode=verify-ca` or `sslmode=verify-full`. Mayu creates its table on
+start-up, so an empty database is enough.
 
 Mayu uses Moe-Counter's table layout. To keep existing counts, copy Moe-Counter's database file to
 `data/count.db` before starting Mayu.
@@ -108,11 +111,12 @@ never stored. Any other path redirects to this repository.
 
 ## Checks
 
-`gleam test` runs the SQLite and request tests.
+`crystal tool format --check src spec` checks formatting, and `crystal spec` runs the SQLite and
+request tests.
 
-`MAYU_TEST_DATABASE_URL=postgres://postgres@localhost:5432/mayu_test gleam run -m postgres_test`
-runs the PostgreSQL tests. They work in a temporary schema inside a transaction, then roll the
-transaction back so the database keeps its previous state.
+`MAYU_TEST_DATABASE_URL=postgres://postgres@localhost:5432/mayu_test crystal spec` also runs the
+PostgreSQL tests, which are pending without that variable. They work in a temporary schema inside
+a transaction, then roll the transaction back so the database keeps its previous state.
 
 `python3 test/http_smoke.py http://localhost:3000` checks a running instance, including
 concurrent increments. It creates a counter, so point it at a disposable database. CI runs it

@@ -4,11 +4,12 @@
 .vscode
 .DS_Store
 
-# Gleam
-build
-*.beam
-*.ez
-erl_crash.dump
+# Crystal
+bin
+lib
+.shards
+*.dwarf
+spec
 
 # Nix
 flake.lock

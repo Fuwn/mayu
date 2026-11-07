@@ -1,0 +1,22 @@
+name: mayu
+version: 0.2.2
+description: Moe-Counter Compatible Website Hit Counter
+license: GPL-3.0-only
+repository: https://github.com/Fuwn/mayu
+
+authors:
+  - Fuwn <contact@fuwn.net>
+
+crystal: ">= 1.22.0"
+
+targets:
+  mayu:
+    main: src/mayu.cr
+
+dependencies:
+  db:
+    github: crystal-lang/crystal-db
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+  pg:
+    github: will/crystal-pg
