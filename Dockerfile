@@ -20,7 +20,7 @@ RUN ./scripts/sync-themes.sh
 
 COPY src/ ./src/
 
-RUN shards build --production --release --static --no-debug
+RUN shards build --production --release --static --no-debug -Dwithout_mt
 
 FROM alpine:3.24
 
