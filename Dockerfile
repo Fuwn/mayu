@@ -55,7 +55,7 @@ USER mayu
 # The default process table reserves room for about a million processes, and
 # per-scheduler allocators add more fixed overhead. Together these flags cut
 # idle memory from about 72 MiB to 45 MiB without lowering measured throughput.
-ENV ERL_FLAGS="+P 262144 +Mea min"
+ENV ERL_FLAGS="+P 262144 +Mea min +S 1:1 +SDcpu 1:1 +SDio 1 +sbwt none +sbwtdcpu none +sbwtdio none"
 
 ENTRYPOINT ["/mayu/erlang-shipment/entrypoint.sh"]
 
