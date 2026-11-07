@@ -14,6 +14,8 @@ const maximum_padding = 12
 
 const maximum_name_length = 64
 
+const uncached = "max-age=0, no-cache, no-store, must-revalidate"
+
 const demo_counter = database.Counter("demo", 1_234_567_890, "", "")
 
 fn middleware(request, handle) {
@@ -40,7 +42,8 @@ fn with_counter(connection, name, respond) {
   }
 
   case counter {
-    Ok(counter) -> respond(counter)
+    Ok(counter) ->
+      respond(counter) |> response.set_header("Cache-Control", uncached)
     Error(_) -> wisp.internal_server_error()
   }
 }
@@ -72,10 +75,6 @@ pub fn handle(request, connection, index_html, default_theme) {
 
       wisp.ok()
       |> response.set_header("Content-Type", "image/svg+xml")
-      |> response.set_header(
-        "Cache-Control",
-        "max-age=0, no-cache, no-store, must-revalidate",
-      )
       |> wisp.string_tree_body(svg.xml(
         query_theme(query, default_theme),
         default_theme,

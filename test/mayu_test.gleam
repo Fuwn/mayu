@@ -224,6 +224,8 @@ pub fn request_counts_hits_and_preserves_encoded_names_test() {
   simulate.read_body(image_response)
   |> string.contains("width=\"120\"")
   |> should.be_true
+  response.get_header(record_response, "Cache-Control")
+  |> should.equal(Ok("max-age=0, no-cache, no-store, must-revalidate"))
   simulate.read_body(record_response)
   |> json.parse(decode.at(["num"], decode.int))
   |> should.equal(Ok(2))
