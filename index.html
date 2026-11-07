@@ -349,7 +349,10 @@
 
         inputTimeout = setTimeout(updateCounter, 500);
       });
-      themeSelect.addEventListener("change", updateCounter);
+      themeSelect.addEventListener("change", () => {
+        clearTimeout(inputTimeout);
+        updateCounter();
+      });
       mascotMediaQuery.addEventListener("change", loadMascot);
       loadMascot();
     </script>
