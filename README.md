@@ -84,7 +84,7 @@ Mayu reads its configuration from environment variables. All of them are optiona
 | --- | --- |
 | `PORT` | Port the server listens on. Defaults to `3000`. |
 | `MAYU_DATABASE_URL` | A `postgres://` or `postgresql://` URL. When unset, Mayu uses the SQLite file at `data/count.db`. |
-| `MAYU_THEMES` | Comma-separated list of themes to load, for example `asoul,garukura`. When unset, Mayu loads every theme. A shorter list uses less memory and lowers the largest possible response. |
+| `MAYU_THEMES` | Comma-separated list of themes to load, for example `asoul,garukura`. When unset, Mayu loads every theme. A shorter list uses less memory and lowers the largest possible response. On memory-tight hosts, leaving out `lain`, `urushi`, and `yuruyuri` saves the most, because they hold about 70% of the theme data. |
 | `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
 | `MAYU_PRUNE_AFTER_DAYS` | Counters not incremented within this many days are eligible for pruning. |
 | `MAYU_PRUNE_EVERY_HOURS` | How often, in hours, the prune sweep runs. |
