@@ -17,7 +17,7 @@ module Mayu
 
     def initialize(@name : String, glyph_images : Hash(String, GlyphImage))
       @glyphs_by_slot = StaticArray(GlyphImage?, SLOT_COUNT).new do |slot|
-        glyph_images[slot_name(slot)]?
+        glyph_images[GLYPH_NAMES[slot]]?
       end
       @first_slots_with_same_image = StaticArray(Int32, SLOT_COUNT).new do |slot|
         image_id = @glyphs_by_slot[slot].try(&.id)
@@ -73,14 +73,6 @@ module Mayu
 
     def rendering(number : Int64, padding : Int32) : Rendering
       Rendering.new(self, number, padding)
-    end
-
-    private def slot_name(slot) : String
-      case slot
-      when START_SLOT then "_start"
-      when END_SLOT   then "_end"
-      else                 slot.to_s
-      end
     end
   end
 end
