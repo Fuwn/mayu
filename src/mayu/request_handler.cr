@@ -43,10 +43,8 @@ module Mayu
           context.response.content_length = rendering.gzip_bytesize
 
           rendering.write_gzip(context.response) unless context.request.method == "HEAD"
-        elsif rendering.streamed?
-          respond(context, "image/svg+xml", rendering)
         else
-          respond(context, "image/svg+xml", rendering.to_s)
+          respond(context, "image/svg+xml", rendering.streamed? ? rendering : rendering.to_s)
         end
       elsif route == "record" && counter_name
         return unless counter = record_hit_or_reject(context, counter_name)
