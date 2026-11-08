@@ -2,7 +2,7 @@
 .gitignore
 .github
 .vscode
-.DS_Store
+**/.DS_Store
 
 # Crystal
 bin
