@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
+import gzip
 import json
 import sys
 import time
@@ -41,10 +42,22 @@ with ThreadPoolExecutor(max_workers=20) as executor:
 
 assert counts == list(range(3, 23)), counts
 
+large_image_request = urllib.request.Request(
+    base_url + "/get/@" + counter_name + "-gzip?theme=lain&padding=12",
+    headers={"Accept-Encoding": "gzip"},
+)
+
+with urllib.request.urlopen(large_image_request, timeout=10) as response:
+    document = xml.fromstring(gzip.decompress(response.read()))
+
+    assert response.headers["Content-Encoding"] == "gzip"
+    assert response.headers["Vary"] == "Accept-Encoding"
+    assert document.find(".//{http://www.w3.org/2000/svg}image") is not None
+
 with urllib.request.urlopen(base_url + "/", timeout=10) as response:
     homepage = response.read()
 
     assert b"{{" not in homepage
     assert b"(v" in homepage
 
-print("Packaged startup, assets, and concurrent increments passed")
+print("Packaged startup, assets, concurrent increments, and gzip passed")

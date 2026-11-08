@@ -149,6 +149,57 @@ describe Mayu::ThemeCatalog do
   end
 end
 
+describe Mayu::BatchedLogBackend do
+  it "writes each line once while a flush waits on a full pipe" do
+    reader, writer = IO.pipe
+    writer.sync = false
+    backend = Mayu::BatchedLogBackend.new(writer)
+    writer_count = 4
+    lines_per_writer = 1000
+    finished_writers = Channel(Nil).new
+    received_text = Channel(String).new(1)
+
+    spawn do
+      sleep 50.milliseconds
+      received_text.send(reader.gets_to_end)
+    end
+
+    writer_count.times do |writer_index|
+      spawn do
+        lines_per_writer.times do |line_index|
+          backend.write(Log::Entry.new("spec", :info, "line #{writer_index}-#{line_index}", Log::Metadata.empty, nil))
+          Fiber.yield
+        end
+
+        finished_writers.send(nil)
+      end
+    end
+
+    writer_count.times { finished_writers.receive }
+    sleep 200.milliseconds
+    writer.close
+
+    received_lines = received_text.receive.scan(/line \d+-\d+/).map(&.[0])
+    expected_lines = (0...writer_count).flat_map { |writer_index| (0...lines_per_writer).map { |line_index| "line #{writer_index}-#{line_index}" } }
+
+    received_lines.sort.should eq(expected_lines.sort)
+  end
+end
+
+describe Mayu::InactivityTimeoutTCPServer do
+  it "disables Nagle's algorithm on accepted sockets" do
+    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0)
+    client = TCPSocket.new("127.0.0.1", server.local_address.port)
+    accepted_socket = server.accept?.not_nil!
+
+    accepted_socket.tcp_nodelay?.should be_true
+  ensure
+    accepted_socket.try(&.close)
+    client.try(&.close)
+    server.try(&.close)
+  end
+end
+
 describe Mayu::RequestHandler do
   it "counts hits and preserves encoded names" do
     with_sqlite do |connection, database|
