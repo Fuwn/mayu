@@ -1,7 +1,6 @@
 require "log"
 
 module Mayu
-  # Formats entries into STDOUT's buffer and flushes from a spawned fiber.
   # `spawn` only enqueues, so the single-threaded scheduler runs the flush after
   # every runnable request fiber blocks or finishes, and the lines logged in that
   # pass leave in one write. A flush can wait on a full pipe, and appending to

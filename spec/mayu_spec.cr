@@ -100,10 +100,8 @@ describe Mayu::Theme do
     decompressed_image = Compress::Gzip::Reader.open(IO::Memory.new(compressed_output.to_slice), &.gets_to_end)
 
     rendering.streamed?.should be_true
-    rendering.compressible?.should be_true
     compressed_output.size.should eq(rendering.gzip_bytesize)
     decompressed_image.should eq(rendering.to_s)
-    theme("known", DIGIT_GLYPHS).rendering(7, 3).compressible?.should be_false
   end
 
   it "declares the exact size of every rendering" do

@@ -70,26 +70,17 @@ module Mayu
         String.build(@bytesize) { |svg| to_s(svg) }
       end
 
-      def compressible? : Bool
-        return false unless streamed?
-
-        each_definition { |glyph| return false unless glyph.compressed_definition }
-
-        true
-      end
-
       def gzip_bytesize : Int32
         compressed_bytesize = 0
 
-        each_definition { |glyph| compressed_bytesize += glyph.compressed_definition.not_nil!.size }
+        each_definition { |glyph| compressed_bytesize += glyph.compressed_definition.size }
 
         GZIP_HEADER.size + STORED_BLOCK_HEADER_BYTESIZE + @opening_bytesize + compressed_bytesize +
           STORED_BLOCK_HEADER_BYTESIZE + @closing_bytesize + FINAL_EMPTY_BLOCK.size + GZIP_TRAILER_BYTESIZE
       end
 
-      # Writes gzip assembled from definitions deflated at compile time. Each ends
-      # on a byte boundary, so the dynamic opening and closing go between them as
-      # stored blocks, and the checksum combines the definitions' own checksums.
+      # Each compressed definition ends on a byte boundary, so the dynamic opening
+      # and closing can go between them as stored blocks.
       def write_gzip(io : IO) : Nil
         opening = String.build(@opening_bytesize) { |text| write_opening(text) }
         closing = String.build(@closing_bytesize) { |text| write_closing(text) }
@@ -98,7 +89,7 @@ module Mayu
         io.write(GZIP_HEADER)
         write_stored_block(io, opening)
         each_definition do |glyph|
-          io.write(glyph.compressed_definition.not_nil!)
+          io.write(glyph.compressed_definition)
           checksum = Digest::CRC32.combine(checksum, glyph.definition_checksum, glyph.definition.bytesize)
         end
         write_stored_block(io, closing)

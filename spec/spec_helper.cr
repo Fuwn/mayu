@@ -32,7 +32,7 @@ def large_theme(theme_name) : Mayu::Theme
   glyph_images = (["_start", "_end"] + DIGIT_GLYPHS).to_h do |glyph_name|
     definition = %(<image id="#{glyph_name}" data="#{glyph_name * 9000}"/>)
 
-    {glyph_name, Mayu::GlyphImage.new(id: glyph_name, definition: definition, width: 10, height: 20).compressed}
+    {glyph_name, Mayu::GlyphImage.new(id: glyph_name, definition: definition, width: 10, height: 20)}
   end
 
   Mayu::Theme.new(theme_name, glyph_images)

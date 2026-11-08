@@ -15,25 +15,27 @@ module Mayu
     getter width : Int64
     getter height : Int64
     getter use_prefix : String
-    getter compressed_definition : Bytes?
+    getter compressed_definition : Bytes
     getter definition_checksum : UInt32
 
-    def initialize(@id, @definition, @width, @height, @compressed_definition = nil, @definition_checksum = 0_u32)
+    def initialize(@id, @definition, @width, @height, @compressed_definition, @definition_checksum)
       @use_prefix = %(<use xlink:href="##{@id}" x=")
     end
 
-    # Returns a copy carrying its definition as raw deflate from a fresh
-    # compressor, flushed rather than closed: the blocks are non-final and end on
-    # a byte boundary, so any number can follow one another in a gzip stream.
-    def compressed : GlyphImage
+    def self.new(id : String, definition : String, width : Int64, height : Int64) : GlyphImage
+      new(id, definition, width, height, deflate(definition), Digest::CRC32.checksum(definition))
+    end
+
+    # A fresh compressor flushed rather than closed emits non-final blocks that
+    # end on a byte boundary, so any number can follow one another in a gzip stream.
+    private def self.deflate(definition : String) : Bytes
       compressed_output = IO::Memory.new
       deflate = Compress::Deflate::Writer.new(compressed_output, level: Compress::Deflate::BEST_COMPRESSION)
 
-      deflate << @definition
+      deflate << definition
       deflate.flush
 
-      GlyphImage.new(@id, @definition, @width, @height, compressed_output.to_slice.dup,
-        Digest::CRC32.checksum(@definition))
+      compressed_output.to_slice.dup
     end
 
     def self.load(path : String) : GlyphImage?

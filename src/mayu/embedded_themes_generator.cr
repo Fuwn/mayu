@@ -43,12 +43,9 @@ theme_names.each do |theme_name|
   puts "  #{theme_name.inspect} => {"
 
   glyph_images.each do |glyph_name, glyph_image|
-    compressed_image = glyph_image.compressed
-
     puts "    #{glyph_name.inspect} => Mayu::GlyphImage.new(#{glyph_image.id.inspect}, " \
          "#{glyph_image.definition.inspect}, #{glyph_image.width}_i64, #{glyph_image.height}_i64, " \
-         "#{byte_literal(compressed_image.compressed_definition.not_nil!)}.to_slice, " \
-         "#{compressed_image.definition_checksum}_u32),"
+         "#{byte_literal(glyph_image.compressed_definition)}.to_slice, #{glyph_image.definition_checksum}_u32),"
   end
 
   puts "  },"

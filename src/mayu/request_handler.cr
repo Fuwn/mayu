@@ -37,7 +37,7 @@ module Mayu
 
         context.response.headers["Vary"] = "Accept-Encoding"
 
-        if rendering.compressible? && accepts_gzip?(context.request)
+        if rendering.streamed? && accepts_gzip?(context.request)
           context.response.headers["Content-Encoding"] = "gzip"
           context.response.content_type = "image/svg+xml"
           context.response.content_length = rendering.gzip_bytesize
