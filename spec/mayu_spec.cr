@@ -91,6 +91,21 @@ describe Mayu::Theme do
     rendered_image.scan("<use ").size.should eq(3)
   end
 
+  it "assembles gzip that decompresses to the rendering" do
+    rendering = large_theme("large").rendering(1_234_567_890, 12)
+    compressed_output = IO::Memory.new
+
+    rendering.write_gzip(compressed_output)
+
+    decompressed_image = Compress::Gzip::Reader.open(IO::Memory.new(compressed_output.to_slice), &.gets_to_end)
+
+    rendering.streamed?.should be_true
+    rendering.compressed?.should be_true
+    compressed_output.size.should eq(rendering.gzip_bytesize)
+    decompressed_image.should eq(rendering.to_s)
+    theme("known", DIGIT_GLYPHS).rendering(7, 3).compressed?.should be_false
+  end
+
   it "declares the exact size of every rendering" do
     themed = theme("known", ["_start", "_end"] + DIGIT_GLYPHS)
 
@@ -150,6 +165,25 @@ describe Mayu::RequestHandler do
       record_response.headers["Cache-Control"].should eq("max-age=0, no-cache, no-store, must-revalidate")
       JSON.parse(record_response.body)["num"].should eq(2)
       remaining_names(connection).should eq(["has%20space"])
+    end
+  end
+
+  it "serves large images as gzip only to clients that accept it" do
+    with_sqlite do |_, database|
+      database.create_or_migrate_table
+
+      accepting = HTTP::Headers{"Accept-Encoding" => "br, gzip"}
+      refusing = HTTP::Headers{"Accept-Encoding" => "gzip;q=0, br"}
+      compressed_response = handle_request(database, "GET", "/get/@large?theme=large&padding=12", accepting)
+      refused_response = handle_request(database, "GET", "/get/@large?theme=large&padding=12", refusing)
+      small_response = handle_request(database, "GET", "/get/@small", accepting)
+
+      compressed_response.headers["Content-Encoding"].should eq("gzip")
+      compressed_response.headers["Vary"].should eq("Accept-Encoding")
+      Compress::Gzip::Reader.open(IO::Memory.new(compressed_response.body), &.gets_to_end).should contain("</svg>")
+      refused_response.headers["Content-Encoding"]?.should be_nil
+      refused_response.body.should end_with("</svg>")
+      small_response.headers["Content-Encoding"]?.should be_nil
     end
   end
 

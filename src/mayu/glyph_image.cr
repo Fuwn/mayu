@@ -1,4 +1,6 @@
 require "base64"
+require "compress/deflate"
+require "digest/crc32"
 require "digest/sha256"
 require "log"
 
@@ -13,9 +15,24 @@ module Mayu
     getter width : Int64
     getter height : Int64
     getter use_prefix : String
+    getter compressed_definition : Bytes?
+    getter definition_checksum : UInt32
 
-    def initialize(@id, @definition, @width, @height)
+    def initialize(@id, @definition, @width, @height, @compressed_definition = nil, @definition_checksum = 0_u32)
       @use_prefix = %(<use xlink:href="##{@id}" x=")
+    end
+
+    # Returns a copy carrying its definition deflated into raw blocks that end on
+    # a byte boundary, so it can be spliced into any gzip stream.
+    def compressed : GlyphImage
+      compressed_output = IO::Memory.new
+      deflate = Compress::Deflate::Writer.new(compressed_output, level: Compress::Deflate::BEST_COMPRESSION)
+
+      deflate << @definition
+      deflate.flush
+
+      GlyphImage.new(@id, @definition, @width, @height, compressed_output.to_slice.dup,
+        Digest::CRC32.checksum(@definition))
     end
 
     def self.load(path : String) : GlyphImage?

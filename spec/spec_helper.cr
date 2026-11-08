@@ -28,16 +28,28 @@ def theme(theme_name, glyph_names) : Mayu::Theme
   Mayu::Theme.new(theme_name, glyph_images)
 end
 
-def handle_request(database, method, resource) : HTTP::Client::Response
+# Builds a theme whose images are large and compressed, so its renderings stream
+# and can be served as gzip.
+def large_theme(theme_name) : Mayu::Theme
+  glyph_images = (["_start", "_end"] + DIGIT_GLYPHS).to_h do |glyph_name|
+    definition = %(<image id="#{glyph_name}" data="#{glyph_name * 9000}"/>)
+
+    {glyph_name, Mayu::GlyphImage.new(id: glyph_name, definition: definition, width: 10, height: 20).compressed}
+  end
+
+  Mayu::Theme.new(theme_name, glyph_images)
+end
+
+def handle_request(database, method, resource, headers = HTTP::Headers.new) : HTTP::Client::Response
   output = IO::Memory.new
-  request = HTTP::Request.new(method, resource)
+  request = HTTP::Request.new(method, resource, headers)
   response = HTTP::Server::Response.new(output)
-  themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS)])
+  themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS), large_theme("large")])
   handler = Mayu::RequestHandler.new(database, themes, "index")
 
   handler.call(HTTP::Server::Context.new(request, response))
   response.close
   output.rewind
 
-  HTTP::Client::Response.from_io(output, ignore_body: method == "HEAD")
+  HTTP::Client::Response.from_io(output, ignore_body: method == "HEAD", decompress: false)
 end

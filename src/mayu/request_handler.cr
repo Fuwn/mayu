@@ -7,13 +7,12 @@ module Mayu
   class RequestHandler
     include HTTP::Handler
 
-    DEFAULT_PADDING         =  6
-    MAXIMUM_PADDING         = 12
-    MAXIMUM_NAME_LENGTH     = 64
-    UNCACHED                = "max-age=0, no-cache, no-store, must-revalidate"
-    DEMO_COUNTER            = Counter.new("demo", 1_234_567_890)
-    REPOSITORY_URL          = "https://github.com/Fuwn/mayu"
-    STREAMED_IMAGE_BYTESIZE = 65_536
+    DEFAULT_PADDING     =  6
+    MAXIMUM_PADDING     = 12
+    MAXIMUM_NAME_LENGTH = 64
+    UNCACHED            = "max-age=0, no-cache, no-store, must-revalidate"
+    DEMO_COUNTER        = Counter.new("demo", 1_234_567_890)
+    REPOSITORY_URL      = "https://github.com/Fuwn/mayu"
 
     def initialize(@database : CounterDatabase, @themes : ThemeCatalog, @index_html : String)
     end
@@ -36,9 +35,17 @@ module Mayu
         padding = requested_padding.try(&.clamp(0, MAXIMUM_PADDING)) || DEFAULT_PADDING
         rendering = theme.rendering(counter.count, padding)
 
-        # Small images leave in one write. Large ones stream, so they never occupy
-        # the heap; a buffered megabyte would grow it for the life of the process.
-        if rendering.bytesize > STREAMED_IMAGE_BYTESIZE
+        context.response.headers["Vary"] = "Accept-Encoding"
+
+        # The edge compresses small images well, but leaves large ones nearly
+        # uncompressed, so Mayu serves those as gzip deflated at compile time.
+        if rendering.streamed? && rendering.compressed? && accepts_gzip?(context.request)
+          context.response.headers["Content-Encoding"] = "gzip"
+          context.response.content_type = "image/svg+xml"
+          context.response.content_length = rendering.gzip_bytesize
+
+          rendering.write_gzip(context.response) unless context.request.method == "HEAD"
+        elsif rendering.streamed?
           respond(context, "image/svg+xml", rendering)
         else
           respond(context, "image/svg+xml", rendering.to_s)
@@ -71,6 +78,17 @@ module Mayu
       context.response.headers["Cache-Control"] = UNCACHED
 
       name == "demo" ? DEMO_COUNTER : @database.increment(name)
+    end
+
+    private def accepts_gzip?(request) : Bool
+      request.headers["Accept-Encoding"]?.try do |accepted_encodings|
+        accepted_encodings.split(',').any? do |accepted_encoding|
+          coding, _, parameters = accepted_encoding.partition(';')
+
+          coding.strip.compare("gzip", case_insensitive: true) == 0 &&
+            !parameters.gsub(' ', "").matches?(/\Aq=0(\.0*)?\z/i)
+        end
+      end || false
     end
 
     private def valid_name?(name)

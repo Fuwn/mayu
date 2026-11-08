@@ -1,24 +1,31 @@
+require "digest/crc32"
+
 module Mayu
   class Theme
     # A counter image whose exact size is known before any byte is written, so a
     # response can declare its length and stream the image without buffering it.
     struct Rendering
-      MAXIMUM_GLYPH_COUNT = 22
+      STREAMED_BYTESIZE   = 65_536
+      MAXIMUM_GLYPH_COUNT =     22
       BEFORE_HEIGHT       = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
       BEFORE_WIDTH        = %(" style="image-rendering: pixelated;" version="1.1" width=")
       BEFORE_DEFINITIONS  = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
                             "<title>Mayu</title><defs>"
-      BEFORE_USES    = "</defs><g>"
-      USE_CLOSING    = %("/>)
-      SVG_CLOSING    = "</g></svg>"
-      FIXED_BYTESIZE = BEFORE_HEIGHT.bytesize + BEFORE_WIDTH.bytesize + BEFORE_DEFINITIONS.bytesize +
-                       BEFORE_USES.bytesize + SVG_CLOSING.bytesize
+      BEFORE_USES                  = "</defs><g>"
+      USE_CLOSING                  = %("/>)
+      SVG_CLOSING                  = "</g></svg>"
+      GZIP_HEADER                  = Bytes[0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 0xff]
+      FINAL_EMPTY_BLOCK            = Bytes[1, 0, 0, 0xff, 0xff]
+      STORED_BLOCK_HEADER_BYTESIZE = 5
+      GZIP_TRAILER_BYTESIZE        = 8
 
       getter bytesize : Int32
       @glyph_slots = StaticArray(UInt8, MAXIMUM_GLYPH_COUNT).new(0_u8)
       @glyph_count = 0
       @width = 0_i64
       @height = 0_i64
+      @opening_bytesize = 0
+      @closing_bytesize = 0
 
       def initialize(@theme : Theme, number : Int64, padding : Int32)
         digits = StaticArray(UInt8, 20).new(0_u8)
@@ -38,24 +45,71 @@ module Mayu
         (digit_count - 1).downto(0) { |digit_index| append_glyph(digits[digit_index]) }
         append_glyph(END_SLOT)
 
-        @bytesize = FIXED_BYTESIZE + decimal_digit_count(@width) + decimal_digit_count(@height)
+        @opening_bytesize = BEFORE_HEIGHT.bytesize + decimal_digit_count(@height) + BEFORE_WIDTH.bytesize +
+                            decimal_digit_count(@width) + BEFORE_DEFINITIONS.bytesize
+        @closing_bytesize = BEFORE_USES.bytesize + SVG_CLOSING.bytesize
+
+        each_use do |glyph, x|
+          @closing_bytesize += glyph.use_prefix.bytesize + decimal_digit_count(x) + USE_CLOSING.bytesize
+        end
+
+        @bytesize = @opening_bytesize + @closing_bytesize
 
         each_definition { |glyph| @bytesize += glyph.definition.bytesize }
-        each_use do |glyph, x|
-          @bytesize += glyph.use_prefix.bytesize + decimal_digit_count(x) + USE_CLOSING.bytesize
-        end
+      end
+
+      # Large images stream, because buffering a megabyte would grow the
+      # garbage-collected heap for the life of the process.
+      def streamed? : Bool
+        @bytesize > STREAMED_BYTESIZE
       end
 
       def to_s(io : IO) : Nil
-        io << BEFORE_HEIGHT << @height << BEFORE_WIDTH << @width << BEFORE_DEFINITIONS
+        write_opening(io)
         each_definition { |glyph| io << glyph.definition }
-        io << BEFORE_USES
-        each_use { |glyph, x| io << glyph.use_prefix << x << USE_CLOSING }
-        io << SVG_CLOSING
+        write_closing(io)
       end
 
       def to_s : String
         String.build(@bytesize) { |svg| to_s(svg) }
+      end
+
+      def compressed? : Bool
+        each_definition { |glyph| return false unless glyph.compressed_definition }
+
+        true
+      end
+
+      def gzip_bytesize : Int32
+        compressed_bytesize = 0
+
+        each_definition { |glyph| compressed_bytesize += glyph.compressed_definition.not_nil!.size }
+
+        GZIP_HEADER.size + STORED_BLOCK_HEADER_BYTESIZE + @opening_bytesize + compressed_bytesize +
+          STORED_BLOCK_HEADER_BYTESIZE + @closing_bytesize + FINAL_EMPTY_BLOCK.size + GZIP_TRAILER_BYTESIZE
+      end
+
+      # Writes gzip assembled from definitions deflated at compile time. Each ends
+      # on a byte boundary, so the dynamic opening and closing go between them as
+      # stored blocks, and the checksum combines the definitions' own checksums.
+      def write_gzip(io : IO) : Nil
+        opening = String.build(@opening_bytesize) { |text| write_opening(text) }
+        closing = String.build(@closing_bytesize) { |text| write_closing(text) }
+        checksum = Digest::CRC32.checksum(opening)
+
+        io.write(GZIP_HEADER)
+        write_stored_block(io, opening)
+        each_definition do |glyph|
+          io.write(glyph.compressed_definition.not_nil!)
+          checksum = Digest::CRC32.combine(checksum, glyph.definition_checksum, glyph.definition.bytesize)
+        end
+        write_stored_block(io, closing)
+        io.write(FINAL_EMPTY_BLOCK)
+
+        checksum = Digest::CRC32.update(closing, checksum)
+
+        io.write_bytes(checksum, IO::ByteFormat::LittleEndian)
+        io.write_bytes(@bytesize.to_u32, IO::ByteFormat::LittleEndian)
       end
 
       private def append_glyph(slot) : Nil
@@ -65,6 +119,23 @@ module Mayu
         @glyph_count += 1
         @width += glyph.width
         @height = glyph.height if glyph.height > @height
+      end
+
+      private def write_opening(io) : Nil
+        io << BEFORE_HEIGHT << @height << BEFORE_WIDTH << @width << BEFORE_DEFINITIONS
+      end
+
+      private def write_closing(io) : Nil
+        io << BEFORE_USES
+        each_use { |glyph, x| io << glyph.use_prefix << x << USE_CLOSING }
+        io << SVG_CLOSING
+      end
+
+      private def write_stored_block(io, text) : Nil
+        io.write_byte(0_u8)
+        io.write_bytes(text.bytesize.to_u16, IO::ByteFormat::LittleEndian)
+        io.write_bytes(~text.bytesize.to_u16, IO::ByteFormat::LittleEndian)
+        io << text
       end
 
       private def each_glyph(&) : Nil
