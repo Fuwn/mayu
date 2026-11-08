@@ -10,6 +10,7 @@ module Mayu
       if client
         client.read_timeout = INACTIVITY_TIMEOUT
         client.write_timeout = INACTIVITY_TIMEOUT
+        client.tcp_nodelay = true
       end
 
       client
