@@ -67,7 +67,7 @@ end
 
 describe Mayu::Theme do
   it "preserves glyph order, padding, and bookends" do
-    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).render(12, 3)
+    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).rendering(12, 3).to_s
 
     rendered_image.should contain(
       %(<g><use xlink:href="#_start" x="0"/><use xlink:href="#0" x="10"/>) \
@@ -75,18 +75,39 @@ describe Mayu::Theme do
   end
 
   it "defines each repeated glyph once" do
-    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).render(1100, 0)
+    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).rendering(1100, 0).to_s
 
     rendered_image.should contain(
       %(<defs><image id="_start"/><image id="1"/><image id="0"/><image id="_end"/></defs>))
     rendered_image.scan("<use ").size.should eq(6)
+  end
+
+  it "defines identical images once even under different glyph names" do
+    shared_image = Mayu::GlyphImage.new(id: "shared", definition: %(<image id="shared"/>), width: 10, height: 20)
+    glyph_images = {"_start" => shared_image, "_end" => shared_image, "1" => shared_image}
+    rendered_image = Mayu::Theme.new("bookends", glyph_images).rendering(1, 1).to_s
+
+    rendered_image.scan(%(<image id="shared"/>)).size.should eq(1)
+    rendered_image.scan("<use ").size.should eq(3)
+  end
+
+  it "declares the exact size of every rendering" do
+    themed = theme("known", ["_start", "_end"] + DIGIT_GLYPHS)
+
+    {0_i64, 7_i64, 1100_i64, 1_234_567_890_i64, Int64::MAX}.each do |number|
+      {0, 6, 12}.each do |padding|
+        rendering = themed.rendering(number, padding)
+
+        rendering.bytesize.should eq(rendering.to_s.bytesize)
+      end
+    end
   end
 end
 
 describe Mayu::ThemeCatalog do
   it "falls back to the default theme" do
     themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS)])
-    rendered_image = themes.theme_or_default("does-not-exist").render(7, 3)
+    rendered_image = themes.theme_or_default("does-not-exist").rendering(7, 3).to_s
 
     rendered_image.should contain(%(width="30"))
     rendered_image.should contain(%(height="20"))
@@ -94,7 +115,7 @@ describe Mayu::ThemeCatalog do
 
   it "renders nothing when no theme is loaded" do
     themes = Mayu::ThemeCatalog.new([] of Mayu::Theme)
-    rendered_image = themes.theme_or_default("does-not-exist").render(7, 3)
+    rendered_image = themes.theme_or_default("does-not-exist").rendering(7, 3).to_s
 
     rendered_image.should_not contain("<image")
   end

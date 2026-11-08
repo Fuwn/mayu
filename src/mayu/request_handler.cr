@@ -7,12 +7,13 @@ module Mayu
   class RequestHandler
     include HTTP::Handler
 
-    DEFAULT_PADDING     =  6
-    MAXIMUM_PADDING     = 12
-    MAXIMUM_NAME_LENGTH = 64
-    UNCACHED            = "max-age=0, no-cache, no-store, must-revalidate"
-    DEMO_COUNTER        = Counter.new("demo", 1_234_567_890)
-    REPOSITORY_URL      = "https://github.com/Fuwn/mayu"
+    DEFAULT_PADDING         =  6
+    MAXIMUM_PADDING         = 12
+    MAXIMUM_NAME_LENGTH     = 64
+    UNCACHED                = "max-age=0, no-cache, no-store, must-revalidate"
+    DEMO_COUNTER            = Counter.new("demo", 1_234_567_890)
+    REPOSITORY_URL          = "https://github.com/Fuwn/mayu"
+    STREAMED_IMAGE_BYTESIZE = 65_536
 
     def initialize(@database : CounterDatabase, @themes : ThemeCatalog, @index_html : String)
     end
@@ -33,8 +34,15 @@ module Mayu
         theme = @themes.theme_or_default(query["theme"]?)
         requested_padding = query["padding"]?.try(&.to_i?(whitespace: false))
         padding = requested_padding.try(&.clamp(0, MAXIMUM_PADDING)) || DEFAULT_PADDING
+        rendering = theme.rendering(counter.count, padding)
 
-        respond(context, "image/svg+xml", theme.render(counter.count, padding))
+        # Small images leave in one write. Large ones stream, so they never occupy
+        # the heap; a buffered megabyte would grow it for the life of the process.
+        if rendering.bytesize > STREAMED_IMAGE_BYTESIZE
+          respond(context, "image/svg+xml", rendering)
+        else
+          respond(context, "image/svg+xml", rendering.to_s)
+        end
       elsif route == "record" && counter_name
         return unless counter = record_hit_or_reject(context, counter_name)
 
@@ -69,7 +77,7 @@ module Mayu
       !name.empty? && name.grapheme_size <= MAXIMUM_NAME_LENGTH
     end
 
-    private def respond(context, content_type, body)
+    private def respond(context, content_type, body : String | Theme::Rendering)
       context.response.content_type = content_type
       context.response.content_length = body.bytesize
 

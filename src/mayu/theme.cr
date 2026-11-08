@@ -7,9 +7,23 @@ module Mayu
     GLYPH_NAMES       = DIGIT_NAMES + ["_start", "_end"]
     ADULT_NAME_SUFFIX = "-h"
 
-    getter name : String
+    START_SLOT = 10
+    END_SLOT   = 11
+    SLOT_COUNT = 12
 
-    def initialize(@name : String, @glyph_images : Hash(String, GlyphImage))
+    getter name : String
+    getter glyphs_by_slot : StaticArray(GlyphImage?, SLOT_COUNT)
+    getter definition_slots : StaticArray(Int32, SLOT_COUNT)
+
+    def initialize(@name : String, glyph_images : Hash(String, GlyphImage))
+      @glyphs_by_slot = StaticArray(GlyphImage?, SLOT_COUNT).new do |slot|
+        glyph_images[slot_name(slot)]?
+      end
+      @definition_slots = StaticArray(Int32, SLOT_COUNT).new do |slot|
+        image_id = @glyphs_by_slot[slot].try(&.id)
+
+        (0...slot).find(slot) { |earlier_slot| image_id && @glyphs_by_slot[earlier_slot].try(&.id) == image_id }
+      end
     end
 
     def self.load(themes_directory : String, name : String) : Theme?
@@ -53,30 +67,18 @@ module Mayu
       @name.ends_with?(ADULT_NAME_SUFFIX)
     end
 
-    def render(number : Int64, padding : Int32) : String
-      digit_names = number.to_s.rjust(padding, '0').chars.map(&.to_s)
-      images = (["_start"] + digit_names + ["_end"]).compact_map { |glyph_name| @glyph_images[glyph_name]? }
-      width = images.sum(0_i64, &.width)
-      height = images.max_of?(&.height) || 0
+    def rendering(number : Int64, padding : Int32) : Rendering
+      Rendering.new(self, number, padding)
+    end
 
-      String.build do |svg|
-        svg << %(<?xml version="1.0" encoding="UTF-8"?><svg height=") << height
-        svg << %(" style="image-rendering: pixelated;" version="1.1" width=") << width
-        svg << %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">)
-        svg << "<title>Mayu</title><defs>"
-        images.uniq(&.id).each { |image| svg << image.definition }
-        svg << "</defs><g>"
-
-        x = 0_i64
-
-        images.each do |image|
-          svg << %(<use xlink:href="#) << image.id << %(" x=") << x << %("/>)
-
-          x += image.width
-        end
-
-        svg << "</g></svg>"
+    private def slot_name(slot) : String
+      case slot
+      when START_SLOT then "_start"
+      when END_SLOT   then "_end"
+      else                 slot.to_s
       end
     end
   end
 end
+
+require "./theme/rendering"

@@ -12,8 +12,10 @@ module Mayu
     getter definition : String
     getter width : Int64
     getter height : Int64
+    getter use_prefix : String
 
     def initialize(@id, @definition, @width, @height)
+      @use_prefix = %(<use xlink:href="##{@id}" x=")
     end
 
     def self.load(path : String) : GlyphImage?
