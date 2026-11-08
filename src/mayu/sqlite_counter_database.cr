@@ -21,6 +21,10 @@ module Mayu
         and updated_at < datetime('now', '-' || ?2 || ' days');
       SQL
 
+    def initialize(connection : DB::Database | DB::Connection)
+      super(connection, INCREMENT_STATEMENT, PRUNE_STATEMENT)
+    end
+
     def self.open : SqliteCounterDatabase
       Dir.mkdir_p("./data")
 
@@ -44,14 +48,6 @@ module Mayu
           @connection.exec "alter table tb_count add column #{column_name} text;"
         end
       end
-    end
-
-    private def increment_statement : String
-      INCREMENT_STATEMENT
-    end
-
-    private def prune_statement : String
-      PRUNE_STATEMENT
     end
   end
 end

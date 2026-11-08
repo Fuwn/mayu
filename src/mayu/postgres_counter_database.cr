@@ -25,6 +25,10 @@ module Mayu
         );
       SQL
 
+    def initialize(connection : DB::Database | DB::Connection)
+      super(connection, INCREMENT_STATEMENT, PRUNE_STATEMENT)
+    end
+
     def self.open(url : String) : PostgresCounterDatabase
       uri = URI.parse(url)
 
@@ -72,14 +76,6 @@ module Mayu
 
         @connection.exec "alter table tb_count #{alterations}"
       end
-    end
-
-    private def increment_statement : String
-      INCREMENT_STATEMENT
-    end
-
-    private def prune_statement : String
-      PRUNE_STATEMENT
     end
   end
 end
