@@ -1,4 +1,5 @@
 require "log"
+require "./mayu/batched_log_backend"
 require "./mayu/counter_database"
 require "./mayu/inactivity_timeout_tcp_server"
 require "./mayu/request_log_handler"
@@ -9,7 +10,7 @@ module Mayu
   VERSION = {{ `shards version "#{__DIR__}/.."`.chomp.stringify }}
 
   def self.run : Nil
-    Log.setup_from_env
+    Log.setup_from_env(backend: BatchedLogBackend.new)
 
     themes = ThemeCatalog.load
     index_html = File.read("index.html")
