@@ -28,8 +28,6 @@ def theme(theme_name, glyph_names) : Mayu::Theme
   Mayu::Theme.new(theme_name, glyph_images)
 end
 
-# Builds a theme whose images are large and compressed, so its renderings stream
-# and can be served as gzip.
 def large_theme(theme_name) : Mayu::Theme
   glyph_images = (["_start", "_end"] + DIGIT_GLYPHS).to_h do |glyph_name|
     definition = %(<image id="#{glyph_name}" data="#{glyph_name * 9000}"/>)

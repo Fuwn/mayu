@@ -37,9 +37,7 @@ module Mayu
 
         context.response.headers["Vary"] = "Accept-Encoding"
 
-        # The edge compresses small images well, but leaves large ones nearly
-        # uncompressed, so Mayu serves those as gzip deflated at compile time.
-        if rendering.streamed? && rendering.compressed? && accepts_gzip?(context.request)
+        if rendering.compressible? && accepts_gzip?(context.request)
           context.response.headers["Content-Encoding"] = "gzip"
           context.response.content_type = "image/svg+xml"
           context.response.content_length = rendering.gzip_bytesize

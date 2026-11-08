@@ -2,15 +2,13 @@ require "digest/crc32"
 
 module Mayu
   class Theme
-    # A counter image whose exact size is known before any byte is written, so a
-    # response can declare its length and stream the image without buffering it.
     struct Rendering
-      STREAMED_BYTESIZE   = 65_536
-      MAXIMUM_GLYPH_COUNT =     22
-      BEFORE_HEIGHT       = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
-      BEFORE_WIDTH        = %(" style="image-rendering: pixelated;" version="1.1" width=")
-      BEFORE_DEFINITIONS  = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
-                            "<title>Mayu</title><defs>"
+      MAXIMUM_BUFFERED_BYTESIZE = 65_536
+      MAXIMUM_GLYPH_COUNT       =     22
+      BEFORE_HEIGHT             = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
+      BEFORE_WIDTH              = %(" style="image-rendering: pixelated;" version="1.1" width=")
+      BEFORE_DEFINITIONS        = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
+                                  "<title>Mayu</title><defs>"
       BEFORE_USES                  = "</defs><g>"
       USE_CLOSING                  = %("/>)
       SVG_CLOSING                  = "</g></svg>"
@@ -58,10 +56,8 @@ module Mayu
         each_definition { |glyph| @bytesize += glyph.definition.bytesize }
       end
 
-      # Large images stream, because buffering a megabyte would grow the
-      # garbage-collected heap for the life of the process.
       def streamed? : Bool
-        @bytesize > STREAMED_BYTESIZE
+        @bytesize > MAXIMUM_BUFFERED_BYTESIZE
       end
 
       def to_s(io : IO) : Nil
@@ -74,7 +70,9 @@ module Mayu
         String.build(@bytesize) { |svg| to_s(svg) }
       end
 
-      def compressed? : Bool
+      def compressible? : Bool
+        return false unless streamed?
+
         each_definition { |glyph| return false unless glyph.compressed_definition }
 
         true
@@ -144,13 +142,11 @@ module Mayu
         end
       end
 
-      # Glyphs whose images are identical share an ID, so each image is defined
-      # once in the order it first appears.
       private def each_definition(&) : Nil
         defined_slots = 0_u16
 
         each_glyph do |glyph, slot|
-          definition_slot_bit = 1_u16 << @theme.definition_slots[slot]
+          definition_slot_bit = 1_u16 << @theme.first_slots_with_same_image[slot]
 
           next unless defined_slots & definition_slot_bit == 0
 

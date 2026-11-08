@@ -8,7 +8,7 @@ serves the same counter routes and reads Moe-Counter's existing SQLite database.
 Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
 counts. An idle Mayu container uses 4 MiB of memory, because a theme is read into memory only once
 it is served. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's Docker image
-is 30 MB compressed, and Moe-Counter's is 84 MB.
+is 31 MB compressed, and Moe-Counter's is 84 MB.
 
 Mayu is written in [Crystal](https://crystal-lang.org) and stores counters in
 [SQLite](https://sqlite.org) or [PostgreSQL](https://www.postgresql.org).

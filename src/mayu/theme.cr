@@ -13,13 +13,13 @@ module Mayu
 
     getter name : String
     getter glyphs_by_slot : StaticArray(GlyphImage?, SLOT_COUNT)
-    getter definition_slots : StaticArray(Int32, SLOT_COUNT)
+    getter first_slots_with_same_image : StaticArray(Int32, SLOT_COUNT)
 
     def initialize(@name : String, glyph_images : Hash(String, GlyphImage))
       @glyphs_by_slot = StaticArray(GlyphImage?, SLOT_COUNT).new do |slot|
         glyph_images[slot_name(slot)]?
       end
-      @definition_slots = StaticArray(Int32, SLOT_COUNT).new do |slot|
+      @first_slots_with_same_image = StaticArray(Int32, SLOT_COUNT).new do |slot|
         image_id = @glyphs_by_slot[slot].try(&.id)
 
         (0...slot).find(slot) { |earlier_slot| image_id && @glyphs_by_slot[earlier_slot].try(&.id) == image_id }

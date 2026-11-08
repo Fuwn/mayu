@@ -22,8 +22,9 @@ module Mayu
       @use_prefix = %(<use xlink:href="##{@id}" x=")
     end
 
-    # Returns a copy carrying its definition deflated into raw blocks that end on
-    # a byte boundary, so it can be spliced into any gzip stream.
+    # Returns a copy carrying its definition as raw deflate from a fresh
+    # compressor, flushed rather than closed: the blocks are non-final and end on
+    # a byte boundary, so any number can follow one another in a gzip stream.
     def compressed : GlyphImage
       compressed_output = IO::Memory.new
       deflate = Compress::Deflate::Writer.new(compressed_output, level: Compress::Deflate::BEST_COMPRESSION)
