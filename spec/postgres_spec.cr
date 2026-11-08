@@ -3,7 +3,7 @@ require "./spec_helper"
 describe "Mayu::CounterDatabase on PostgreSQL" do
   database_url = ENV["MAYU_TEST_DATABASE_URL"]?
 
-  it "migrates, widens integers, increments, and prunes" do
+  it "migrates, widens integers, and increments" do
     pending!("MAYU_TEST_DATABASE_URL is unset") unless database_url
 
     DB.connect(database_url) do |connection|
@@ -47,14 +47,6 @@ describe "Mayu::CounterDatabase on PostgreSQL" do
         large_counter.count.should eq(2_147_483_648)
         column_types.should eq([{"id", "bigint"}, {"num", "bigint"}])
         sequence_maximum.should eq(Int64::MAX)
-        connection.exec <<-SQL
-          insert into tb_count (name, num, updated_at) values
-            ('idle_low', 1, '2000-01-01 00:00:00'),
-            ('idle_high', 9999, '2000-01-01 00:00:00'),
-            ('legacy_null', 1, null)
-          SQL
-        database.prune(10, 30)
-        remaining_names(connection).should eq(["idle_high", "legacy", "legacy_null"])
         transaction.rollback
       end
     end

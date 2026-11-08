@@ -91,13 +91,28 @@ Mayu reads its configuration from environment variables. All of them are optiona
 | `PORT` | Port the server listens on. Defaults to `3000`. |
 | `MAYU_DATABASE_URL` | A `postgres://` or `postgresql://` URL. When unset, Mayu uses the SQLite file at `data/count.db`. |
 | `MAYU_THEMES` | Comma-separated list of themes to serve, for example `asoul,garukura`. When unset, Mayu serves every theme it was built with. The list limits which themes visitors can select. It does not save memory, because Mayu never reads an unserved theme into memory. Leaving out `lain`, `urushi`, and `yuruyuri` lowers the largest possible response. |
-| `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
-| `MAYU_PRUNE_AFTER_DAYS` | Counters not incremented within this many days are eligible for pruning. |
-| `MAYU_PRUNE_EVERY_HOURS` | How often, in hours, the prune sweep runs. |
 
-Pruning runs only when all three `MAYU_PRUNE_*` variables are positive integers. Each sweep deletes
-a counter only if it has fewer than `MAYU_PRUNE_MIN_COUNT` hits *and* no hits within
-`MAYU_PRUNE_AFTER_DAYS` days. A counter that meets just one of those conditions stays.
+### Pruning
+
+Mayu never deletes counters. To prune idle, low-count counters, run one of these statements on a
+schedule, for example from cron. Both delete counters with fewer than 10 hits and no hits in the
+past 30 days. They skip counters with no `updated_at`, which have not been hit since Mayu added its
+timestamp columns.
+
+```sql
+-- SQLite (data/count.db)
+delete from tb_count
+where num < 10 and updated_at < datetime('now', '-30 days');
+
+-- PostgreSQL
+delete from tb_count
+where num < 10
+  and updated_at < to_char(now() at time zone 'utc' - interval '30 days',
+                           'YYYY-MM-DD HH24:MI:SS');
+```
+
+You can run the SQLite statement while Mayu is running. Deleting rows does not shrink the database
+file.
 
 ### Routes
 

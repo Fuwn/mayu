@@ -15,8 +15,7 @@ module Mayu
   end
 
   abstract class CounterDatabase
-    def initialize(@connection : DB::Database | DB::Connection, @increment_statement : String,
-                   @prune_statement : String)
+    def initialize(@connection : DB::Database | DB::Connection, @increment_statement : String)
     end
 
     def self.open(url : String?) : CounterDatabase
@@ -27,10 +26,6 @@ module Mayu
 
     def increment(name : String) : Counter
       @connection.query_one(@increment_statement, name, as: Counter)
-    end
-
-    def prune(minimum_count : Int32, maximum_age_days : Int32) : Nil
-      @connection.exec(@prune_statement, minimum_count, maximum_age_days)
     end
   end
 end

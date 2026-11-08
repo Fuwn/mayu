@@ -48,21 +48,6 @@ describe Mayu::CounterDatabase do
       remaining_names(connection).should eq(["second"])
     end
   end
-
-  it "prunes only idle, low-count counters" do
-    with_sqlite do |connection, database|
-      database.create_or_migrate_table
-      connection.exec <<-SQL
-        insert into tb_count (name, num, created_at, updated_at) values
-          ('idle_low', 1, '2000-01-01 00:00:00', '2000-01-01 00:00:00'),
-          ('idle_high', 9999, '2000-01-01 00:00:00', '2000-01-01 00:00:00'),
-          ('fresh_low', 1, datetime('now'), datetime('now')),
-          ('null_timestamp', 1, null, null);
-        SQL
-      database.prune(10, 30)
-      remaining_names(connection).should eq(["fresh_low", "idle_high", "null_timestamp"])
-    end
-  end
 end
 
 describe Mayu::Theme do

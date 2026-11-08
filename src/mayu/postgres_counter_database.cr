@@ -15,18 +15,8 @@ module Mayu
       returning name, num, created_at, updated_at;
       SQL
 
-    PRUNE_STATEMENT = <<-SQL
-      delete from tb_count
-      where num < $1
-        and updated_at is not null
-        and updated_at < to_char(
-          now() at time zone 'utc' - make_interval(days => $2),
-          'YYYY-MM-DD HH24:MI:SS'
-        );
-      SQL
-
     def initialize(connection : DB::Database | DB::Connection)
-      super(connection, INCREMENT_STATEMENT, PRUNE_STATEMENT)
+      super(connection, INCREMENT_STATEMENT)
     end
 
     def self.open(url : String) : PostgresCounterDatabase
