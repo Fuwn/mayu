@@ -120,6 +120,17 @@ describe Mayu::ThemeCatalog do
     rendered_image.should_not contain("<image")
   end
 
+  it "loads only enabled themes and skips empty ones" do
+    glyph_images = {
+      "chosen" => {"0" => Mayu::GlyphImage.new(id: "0", definition: "", width: 1, height: 1)},
+      "other"  => {"0" => Mayu::GlyphImage.new(id: "0", definition: "", width: 1, height: 1)},
+      "empty"  => {} of String => Mayu::GlyphImage,
+    }
+
+    Mayu::ThemeCatalog.load(glyph_images, "chosen, empty").default_name.should eq("chosen")
+    Mayu::ThemeCatalog.load(glyph_images, "empty").empty?.should be_true
+  end
+
   it "prefers a loaded theme over the preferred name" do
     Mayu::ThemeCatalog.new([theme("gelbooru-h", DIGIT_GLYPHS)]).default_name.should eq("gelbooru-h")
   end

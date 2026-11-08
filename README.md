@@ -6,9 +6,9 @@ Mayu is a drop-in replacement for [Moe-Counter](https://github.com/journey-ad/Mo
 serves the same counter routes and reads Moe-Counter's existing SQLite database.
 
 Mayu commits every hit to the database as it arrives, so a crashed or killed process loses no
-counts. With every theme loaded, an idle Mayu container uses 23 MiB of memory. An idle container
-from Moe-Counter's official image uses 90 MiB. Mayu's Docker image is 23 MB compressed, and
-Moe-Counter's is 84 MB.
+counts. An idle Mayu container uses 4 MiB of memory, because a theme is read into memory only once
+it is served. An idle container from Moe-Counter's official image uses 90 MiB. Mayu's Docker image
+is 23 MB compressed, and Moe-Counter's is 84 MB.
 
 Mayu is written in [Crystal](https://crystal-lang.org) and stores counters in
 [SQLite](https://sqlite.org) or [PostgreSQL](https://www.postgresql.org).
@@ -30,6 +30,9 @@ This repository tracks four original themes: `garukura`, `lain`, `urushi`, and `
 `./scripts/sync-themes.sh` adds the rest of the [Moe-Counter](https://github.com/journey-ad/Moe-Counter)
 theme collection, including `asoul`, `gelbooru`, `moebooru`, and `rule34`. The Docker image runs
 the script at build time; run it yourself after cloning to get the full set locally.
+
+Mayu compiles the themes in `./themes` into its binary, so rebuild after adding or changing a
+theme. A theme's images are read into memory only once it is first served.
 
 The script fetches the upstream revision pinned inside it and copies only files that are missing
 locally. It never replaces or deletes local files. To copy from a local upstream checkout instead,
@@ -87,7 +90,7 @@ Mayu reads its configuration from environment variables. All of them are optiona
 | --- | --- |
 | `PORT` | Port the server listens on. Defaults to `3000`. |
 | `MAYU_DATABASE_URL` | A `postgres://` or `postgresql://` URL. When unset, Mayu uses the SQLite file at `data/count.db`. |
-| `MAYU_THEMES` | Comma-separated list of themes to load, for example `asoul,garukura`. When unset, Mayu loads every theme. A shorter list uses less memory and lowers the largest possible response. On memory-tight hosts, leaving out `lain`, `urushi`, and `yuruyuri` saves the most, because they hold about 70% of the theme data. |
+| `MAYU_THEMES` | Comma-separated list of themes to serve, for example `asoul,garukura`. When unset, Mayu serves every theme it was built with. Unserved themes never occupy memory, so the list limits what visitors can select; leaving out `lain`, `urushi`, and `yuruyuri` lowers the largest possible response. |
 | `MAYU_PRUNE_MIN_COUNT` | Counters with fewer than this many hits are eligible for pruning. |
 | `MAYU_PRUNE_AFTER_DAYS` | Counters not incremented within this many days are eligible for pruning. |
 | `MAYU_PRUNE_EVERY_HOURS` | How often, in hours, the prune sweep runs. |

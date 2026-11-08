@@ -4,7 +4,6 @@ require "./theme"
 
 module Mayu
   class ThemeCatalog
-    DIRECTORY              = "./themes"
     PREFERRED_DEFAULT_NAME = "asoul"
 
     getter default_name : String
@@ -22,18 +21,16 @@ module Mayu
       end
     end
 
-    def self.load(enabled_names : String? = ENV["MAYU_THEMES"]?) : ThemeCatalog
+    def self.load(glyph_images_by_theme_name : Hash(String, Hash(String, GlyphImage)),
+                  enabled_names : String? = ENV["MAYU_THEMES"]?) : ThemeCatalog
       enabled_theme_names = (enabled_names || "").split(',').map(&.strip).reject(&.empty?)
-      theme_names = Theme.directory_entries(DIRECTORY)
-
-      unless enabled_theme_names.empty?
-        theme_names.select! { |theme_name| enabled_theme_names.includes?(theme_name) }
+      selected_glyph_images = glyph_images_by_theme_name.select do |theme_name|
+        enabled_theme_names.empty? || enabled_theme_names.includes?(theme_name)
       end
-
-      catalog = new(theme_names.compact_map { |theme_name| Theme.load(DIRECTORY, theme_name) })
+      catalog = new(selected_glyph_images.compact_map { |theme_name, glyph_images| Theme.validated(theme_name, glyph_images) })
 
       if catalog.empty?
-        Log.error { "No themes loaded: check ./themes and MAYU_THEMES; counters will still be recorded" }
+        Log.error { "No themes loaded: check the themes Mayu was built with and MAYU_THEMES; counters will still be recorded" }
       end
 
       catalog

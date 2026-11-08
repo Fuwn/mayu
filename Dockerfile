@@ -27,7 +27,6 @@ FROM alpine:3.24
 WORKDIR /mayu
 
 COPY --from=build /mayu/bin/mayu ./
-COPY --from=build /mayu/themes/ ./themes/
 COPY index.html ./
 
 RUN adduser -D -H mayu \

@@ -26,11 +26,11 @@ module Mayu
       end
     end
 
-    def self.load(themes_directory : String, name : String) : Theme?
+    def self.load_glyph_images(themes_directory : String, name : String) : Hash(String, GlyphImage)
       theme_directory = "#{themes_directory}/#{name}"
       glyph_images = {} of String => GlyphImage
 
-      directory_entries(theme_directory).each do |file_name|
+      directory_entries(theme_directory).sort!.each do |file_name|
         name_parts = file_name.split('.')
 
         next unless name_parts.size == 2 && GLYPH_NAMES.includes?(name_parts[0])
@@ -40,6 +40,10 @@ module Mayu
         end
       end
 
+      glyph_images
+    end
+
+    def self.validated(name : String, glyph_images : Hash(String, GlyphImage)) : Theme?
       if glyph_images.empty?
         Log.error { "Ignoring #{name}: no glyphs found" }
 
