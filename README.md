@@ -70,10 +70,12 @@ By default, Mayu stores counters in SQLite at `data/count.db`, relative to the w
 In the Docker image, that is `/mayu/data/count.db`.
 
 To use PostgreSQL instead, set `MAYU_DATABASE_URL` to a `postgres://` or `postgresql://` URL, for
-example `postgres://mayu:secret@localhost:5432/mayu`. Add `?sslmode=require` if your provider
-requires TLS. Mayu encrypts the connection but does not verify the server's certificate, so it
-refuses to start with `sslmode=verify-ca` or `sslmode=verify-full`. Mayu creates its table on
-start-up, so an empty database is enough.
+example `postgres://mayu:secret@localhost:5432/mayu`. For TLS, add `?sslmode=verify-full`. Mayu
+then checks that the server's certificate names the host and comes from a certificate authority
+the system trusts. If your provider uses its own certificate authority, mount its certificate and
+set `sslrootcert` to that file, for example `?sslmode=verify-full&sslrootcert=/mayu/root.crt`.
+`sslmode=require` encrypts the connection without checking the certificate. Mayu creates its table
+on start-up, so an empty database is enough.
 
 Mayu uses Moe-Counter's table layout. To keep existing counts, copy Moe-Counter's database file to
 `data/count.db` before starting Mayu.
@@ -135,6 +137,16 @@ request tests.
 `MAYU_TEST_DATABASE_URL=postgres://postgres@localhost:5432/mayu_test crystal spec` also runs the
 PostgreSQL tests, which are pending without that variable. They work in a temporary schema inside
 a transaction, then roll the transaction back so the database keeps its previous state.
+
+`test/start_tls_postgres.sh /tmp/mayu-tls` starts a PostgreSQL container on port 5433 with a
+certificate that names only `localhost`. Set `MAYU_TEST_TLS_DATABASE_URL` to run the TLS test,
+which checks that `sslmode=verify-full` accepts `localhost` and refuses `127.0.0.1`:
+
+```sh
+MAYU_TEST_TLS_DATABASE_URL='postgres://postgres@localhost:5433/mayu_test?sslrootcert=/tmp/mayu-tls/ca.crt' crystal spec
+```
+
+`docker rm -f mayu-tls-postgres` removes the container afterwards.
 
 `python3 test/http_smoke.py http://localhost:3000` checks a running instance, including
 concurrent increments. It creates a counter, so point it at a disposable database. CI runs it

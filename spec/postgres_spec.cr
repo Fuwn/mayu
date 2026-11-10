@@ -52,3 +52,25 @@ describe "Mayu::CounterDatabase on PostgreSQL" do
     end
   end
 end
+
+describe "Mayu::PostgresCounterDatabase certificate verification" do
+  database_url = ENV["MAYU_TEST_TLS_DATABASE_URL"]?
+
+  it "connects when the certificate names the host and refuses it otherwise" do
+    pending!("MAYU_TEST_TLS_DATABASE_URL is unset") unless database_url
+
+    url = URI.parse(database_url)
+    url.query_params = url.query_params.tap(&.["sslmode"] = "verify-full")
+    trusted_host_url = url.to_s
+    url.host = "127.0.0.1"
+    mismatched_host_url = url.to_s
+
+    Mayu::PostgresCounterDatabase.open(trusted_host_url)
+
+    error = expect_raises(DB::ConnectionRefused) do
+      Mayu::PostgresCounterDatabase.open(mismatched_host_url)
+    end
+
+    error.cause.try(&.message).to_s.should contain("certificate verify failed")
+  end
+end

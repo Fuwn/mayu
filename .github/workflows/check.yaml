@@ -29,9 +29,11 @@ jobs:
       - run: shards install
       - run: crystal tool format --check src spec
       - run: shards build
+      - run: test/start_tls_postgres.sh "$RUNNER_TEMP/tls"
       - run: crystal spec
         env:
           MAYU_TEST_DATABASE_URL: postgres://postgres@localhost:5432/mayu_test
+          MAYU_TEST_TLS_DATABASE_URL: postgres://postgres@localhost:5433/mayu_test?sslrootcert=${{ runner.temp }}/tls/ca.crt
   container:
     runs-on: ubuntu-latest
     steps:

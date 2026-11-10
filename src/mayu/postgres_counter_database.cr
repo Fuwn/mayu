@@ -26,13 +26,6 @@ module Mayu
         abort "Invalid MAYU_DATABASE_URL: expected a postgres:// URL"
       end
 
-      # crystal-pg accepts these modes but never verifies the server's certificate,
-      # so honouring them would silently drop the protection they ask for.
-      if uri.query_params["sslmode"]?.in?("verify-ca", "verify-full")
-        abort "Unsupported sslmode in MAYU_DATABASE_URL: certificate verification is unavailable; " \
-              "use sslmode=require"
-      end
-
       uri.query_params = uri.query_params.tap do |parameters|
         parameters["max_pool_size"] = POOL_SIZE.to_s
         parameters["max_idle_pool_size"] = POOL_SIZE.to_s

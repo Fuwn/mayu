@@ -20,3 +20,4 @@ dependencies:
     github: crystal-lang/crystal-sqlite3
   pg:
     github: will/crystal-pg
+    commit: 03106f952da6d278b1f30b3cba6c5ed93f392909
