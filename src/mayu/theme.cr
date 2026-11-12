@@ -60,7 +60,7 @@ module Mayu
     end
 
     def self.directory_entries(path : String) : Array(String)
-      Dir.children(path)
+      Dir.children(path).reject(&.starts_with?('.'))
     rescue error : File::Error
       Log.error { "Failed to read theme directory #{path}: #{error.message}" }
 
