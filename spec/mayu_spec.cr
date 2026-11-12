@@ -277,12 +277,13 @@ describe Mayu::RequestHandler do
     with_sqlite do |connection, database|
       database.create_or_migrate_table
 
-      rejected_statuses = ["POST", "PUT", "DELETE"].map do |method|
-        handle_request(database, method, "/record/@methods").status_code
+      rejected_responses = ["POST", "PUT", "DELETE"].map do |method|
+        handle_request(database, method, "/record/@methods")
       end
       head_response = handle_request(database, "HEAD", "/record/@counted")
 
-      rejected_statuses.should eq([405, 405, 405])
+      rejected_responses.map(&.status_code).should eq([405, 405, 405])
+      rejected_responses.map(&.headers["Cache-Control"]?).uniq.should eq([Mayu::RequestHandler::UNCACHED])
       head_response.status_code.should eq(200)
       remaining_names(connection).should eq(["counted"])
     end

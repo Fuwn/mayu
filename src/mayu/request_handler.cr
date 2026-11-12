@@ -63,6 +63,8 @@ module Mayu
     end
 
     private def record_hit_or_reject(context, name) : Counter?
+      context.response.headers["Cache-Control"] = UNCACHED
+
       unless context.request.method.in?("GET", "HEAD")
         context.response.headers["Allow"] = "GET, HEAD"
 
@@ -70,8 +72,6 @@ module Mayu
       end
 
       return respond_empty(context, :bad_request) unless valid_name?(name)
-
-      context.response.headers["Cache-Control"] = UNCACHED
 
       name == "demo" ? DEMO_COUNTER : @database.increment(name)
     end
