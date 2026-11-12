@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM crystallang/crystal:1.22.2-alpine AS build
+FROM crystallang/crystal:1.22.2-alpine@sha256:a0c2fb92a6ce855e8d40bdffe729e2fcccf98dac929d0f9f589fad8c88e297a1 AS build
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
@@ -22,7 +22,7 @@ COPY src/ ./src/
 
 RUN shards build --production --release --static --no-debug -Dwithout_mt
 
-FROM alpine:3.24
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
 WORKDIR /mayu
 
