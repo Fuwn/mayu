@@ -23,8 +23,8 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: crystal-lang/install-crystal@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: crystal-lang/install-crystal@36a22e9145188eec527c96e5a789ce4b832af587 # v1.9.5
         with:
           crystal: "1.22.2"
       - run: sudo apt-get update && sudo apt-get install --yes libsqlite3-dev
@@ -39,7 +39,7 @@ jobs:
   container:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: docker build -t mayu:check .
       - run: docker run -d --name mayu-check -p 127.0.0.1:3000:3000 mayu:check
       - run: python3 test/http_smoke.py http://localhost:3000
