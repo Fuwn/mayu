@@ -183,6 +183,48 @@ describe Mayu::InactivityTimeoutTCPServer do
     client.try(&.close)
     server.try(&.close)
   end
+
+  it "times out a request that trickles in past the deadline" do
+    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
+    client = TCPSocket.new("127.0.0.1", server.local_address.port)
+    accepted_socket = server.accept?.not_nil!
+    started_at = Time.instant
+
+    spawn do
+      10.times do
+        client.print "G"
+        client.flush
+        sleep 100.milliseconds
+      end
+    rescue IO::Error
+    end
+
+    expect_raises(IO::TimeoutError) { accepted_socket.gets }
+    (Time.instant - started_at).should be < 900.milliseconds
+  ensure
+    accepted_socket.try(&.close)
+    client.try(&.close)
+    server.try(&.close)
+  end
+
+  it "restarts the request deadline after each response" do
+    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
+    client = TCPSocket.new("127.0.0.1", server.local_address.port)
+    accepted_socket = server.accept?.not_nil!
+
+    sleep 200.milliseconds
+    client.puts "first"
+    accepted_socket.gets.should eq("first")
+    accepted_socket.puts "response"
+    accepted_socket.flush
+    sleep 200.milliseconds
+    client.puts "second"
+    accepted_socket.gets.should eq("second")
+  ensure
+    accepted_socket.try(&.close)
+    client.try(&.close)
+    server.try(&.close)
+  end
 end
 
 describe Mayu::RequestHandler do
