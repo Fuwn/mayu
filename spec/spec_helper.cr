@@ -42,12 +42,12 @@ def large_theme(theme_name) : Mayu::Theme
   Mayu::Theme.new(theme_name, glyph_images)
 end
 
-def handle_request(database, method, resource, headers = HTTP::Headers.new, index_html = "index") : HTTP::Client::Response
+def handle_request(database, method, resource, headers = HTTP::Headers.new) : HTTP::Client::Response
   output = IO::Memory.new
   request = HTTP::Request.new(method, resource, headers)
   response = HTTP::Server::Response.new(output)
   themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS), large_theme("large")])
-  handler = Mayu::RequestHandler.new(database, themes, index_html)
+  handler = Mayu::RequestHandler.new(database, themes, "index")
 
   handler.call(HTTP::Server::Context.new(request, response))
   response.close

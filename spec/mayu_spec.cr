@@ -318,17 +318,11 @@ describe Mayu::RequestHandler do
     end
   end
 
-  it "limits the homepage to its own inline script and style" do
+  it "forbids framing the homepage" do
     with_sqlite do |_, database|
-      index_html = "<style>body {}</style><script>run()</script>"
-      script_hash = Base64.strict_encode(Digest::SHA256.digest("run()"))
-      style_hash = Base64.strict_encode(Digest::SHA256.digest("body {}"))
-      homepage_response = handle_request(database, "GET", "/", index_html: index_html)
-      policy = homepage_response.headers["Content-Security-Policy"]
+      homepage_response = handle_request(database, "GET", "/")
 
-      policy.should contain("script-src 'sha256-#{script_hash}';")
-      policy.should contain("style-src 'sha256-#{style_hash}' https://fonts.googleapis.com;")
-      policy.should contain("frame-ancestors 'none'")
+      homepage_response.headers["Content-Security-Policy"].should eq("frame-ancestors 'none'")
       homepage_response.headers["X-Content-Type-Options"].should eq("nosniff")
     end
   end
