@@ -1,3 +1,5 @@
+require "base64"
+require "digest/sha256"
 require "http/server"
 require "json"
 require "./counter_database"
@@ -13,8 +15,20 @@ module Mayu
     UNCACHED              = "max-age=0, no-cache, no-store, must-revalidate"
     DEMO_COUNTER          = Counter.new("demo", 1_234_567_890)
     REPOSITORY_URL        = "https://github.com/Fuwn/mayu"
+    INLINE_ELEMENT        = /<(script|style)>(.*?)<\/\1>/m
 
     def initialize(@database : CounterDatabase, @themes : ThemeCatalog, @index_html : String)
+      @homepage_security_policy = RequestHandler.homepage_security_policy(@index_html)
+    end
+
+    def self.homepage_security_policy(index_html : String) : String
+      hashes_by_element = index_html.scan(INLINE_ELEMENT).group_by(&.[1]).transform_values do |matches|
+        matches.join(' ') { |match| "'sha256-#{Base64.strict_encode(Digest::SHA256.digest(match[2]))}'" }
+      end
+
+      "default-src 'none'; script-src #{hashes_by_element["script"]? || "'none'"}; " \
+      "style-src #{hashes_by_element["style"]?} https://fonts.googleapis.com; font-src https://fonts.gstatic.com; " \
+      "img-src 'self' https://i.imgur.com data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     end
 
     def call(context : HTTP::Server::Context) : Nil
@@ -22,7 +36,11 @@ module Mayu
       route = segments.first?
       counter_name = segments[1]?.try(&.lchop?('@')) if segments.size == 2
 
+      context.response.headers["X-Content-Type-Options"] = "nosniff"
+
       if segments.empty?
+        context.response.headers["Content-Security-Policy"] = @homepage_security_policy
+
         respond(context, "text/html; charset=utf-8", @index_html)
       elsif segments == ["heart-beat"]
         respond(context, "text/plain; charset=utf-8", "alive")
