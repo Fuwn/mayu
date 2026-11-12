@@ -1,7 +1,9 @@
+require "log/spec"
 require "spec"
 require "../src/mayu/batched_log_backend"
 require "../src/mayu/counter_database"
 require "../src/mayu/inactivity_timeout_tcp_server"
+require "../src/mayu/request_log_handler"
 require "../src/mayu/request_handler"
 require "../src/mayu/theme_catalog"
 

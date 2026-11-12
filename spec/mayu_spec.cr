@@ -242,6 +242,20 @@ describe Mayu::InactivityTimeoutTCPServer do
   end
 end
 
+describe Mayu::RequestLogHandler do
+  it "truncates long paths in the request log" do
+    handler = Mayu::RequestLogHandler.new
+    context = HTTP::Server::Context.new(HTTP::Request.new("GET", "/#{"a" * 300}"), HTTP::Server::Response.new(IO::Memory.new))
+
+    handler.next = ->(_context : HTTP::Server::Context) { }
+
+    Log.capture do |logs|
+      handler.call(context)
+      logs.check(:info, "200 GET /#{"a" * 255}…")
+    end
+  end
+end
+
 describe Mayu::RequestHandler do
   it "counts hits and preserves encoded names" do
     with_sqlite do |connection, database|
