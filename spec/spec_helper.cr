@@ -2,6 +2,8 @@ require "log/spec"
 require "spec"
 require "../src/mayu/batched_log_backend"
 require "../src/mayu/counter_database"
+require "../src/mayu/embedded_themes"
+require "../src/mayu/homepage"
 require "../src/mayu/inactivity_timeout_tcp_server"
 require "../src/mayu/request_log_handler"
 require "../src/mayu/request_handler"
@@ -42,11 +44,11 @@ def large_theme(theme_name) : Mayu::Theme
   Mayu::Theme.new(theme_name, glyph_images)
 end
 
-def handle_request(database, method, resource, headers = HTTP::Headers.new) : HTTP::Client::Response
+def handle_request(database, method, resource, headers = HTTP::Headers.new,
+                   themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS), large_theme("large")])) : HTTP::Client::Response
   output = IO::Memory.new
   request = HTTP::Request.new(method, resource, headers)
   response = HTTP::Server::Response.new(output)
-  themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS), large_theme("large")])
   handler = Mayu::RequestHandler.new(database, themes, "index")
 
   handler.call(HTTP::Server::Context.new(request, response))

@@ -2,6 +2,7 @@ require "log"
 require "./mayu/batched_log_backend"
 require "./mayu/counter_database"
 require "./mayu/embedded_themes"
+require "./mayu/homepage"
 require "./mayu/inactivity_timeout_tcp_server"
 require "./mayu/request_log_handler"
 require "./mayu/request_handler"
@@ -14,9 +15,7 @@ module Mayu
     Log.setup_from_env(backend: BatchedLogBackend.new)
 
     themes = ThemeCatalog.load(EMBEDDED_THEMES)
-    index_html = File.read("index.html")
-      .gsub("{{ VERSION }}", "(v#{VERSION})")
-      .gsub("{{ THEME_OPTIONS }}", themes.options_html)
+    index_html = Homepage.render(File.read("index.html"), VERSION, themes)
     database = CounterDatabase.open(ENV["MAYU_DATABASE_URL"]?)
     port = ENV["PORT"]?.try(&.to_i?) || 3000
 

@@ -338,3 +338,41 @@ describe Mayu::RequestHandler do
     end
   end
 end
+
+describe Mayu::Homepage do
+  it "fills every placeholder in the homepage template" do
+    themes = Mayu::ThemeCatalog.new([theme("asoul", DIGIT_GLYPHS), theme("other-theme", DIGIT_GLYPHS)])
+    homepage = Mayu::Homepage.render(File.read("index.html"), "1.2.3", themes)
+
+    homepage.should_not contain("{{")
+    homepage.should contain("(v1.2.3)")
+    homepage.should contain(%(<option value="asoul" selected>Asoul</option>))
+    homepage.should contain(%(<option value="other-theme">Other Theme</option>))
+  end
+end
+
+describe "Mayu::EMBEDDED_THEMES" do
+  it "loads every theme with all of its digits" do
+    Log.capture do |logs|
+      Mayu::ThemeCatalog.load(Mayu::EMBEDDED_THEMES, "").empty?.should be_false
+      logs.empty
+    end
+  end
+
+  it "renders the default theme and serves large themes as gzip" do
+    themes = Mayu::ThemeCatalog.load(Mayu::EMBEDDED_THEMES, "")
+
+    with_sqlite do |_, database|
+      database.create_or_migrate_table
+
+      accepting = HTTP::Headers{"Accept-Encoding" => "gzip"}
+      default_response = handle_request(database, "GET", "/get/@embedded", themes: themes)
+      large_response = handle_request(database, "GET", "/get/@embedded?theme=lain&padding=12", accepting, themes)
+
+      default_response.headers["Content-Type"].should eq("image/svg+xml")
+      default_response.body.should contain("<image")
+      large_response.headers["Content-Encoding"].should eq("gzip")
+      Compress::Gzip::Reader.open(IO::Memory.new(large_response.body), &.gets_to_end).should contain("<image")
+    end
+  end
+end
