@@ -7,12 +7,12 @@ module Mayu
   class RequestHandler
     include HTTP::Handler
 
-    DEFAULT_PADDING     =  6
-    MAXIMUM_PADDING     = 12
-    MAXIMUM_NAME_LENGTH = 64
-    UNCACHED            = "max-age=0, no-cache, no-store, must-revalidate"
-    DEMO_COUNTER        = Counter.new("demo", 1_234_567_890)
-    REPOSITORY_URL      = "https://github.com/Fuwn/mayu"
+    DEFAULT_PADDING       =  6
+    MAXIMUM_PADDING       = 12
+    MAXIMUM_NAME_BYTESIZE = 64
+    UNCACHED              = "max-age=0, no-cache, no-store, must-revalidate"
+    DEMO_COUNTER          = Counter.new("demo", 1_234_567_890)
+    REPOSITORY_URL        = "https://github.com/Fuwn/mayu"
 
     def initialize(@database : CounterDatabase, @themes : ThemeCatalog, @index_html : String)
     end
@@ -88,7 +88,7 @@ module Mayu
     end
 
     private def valid_name?(name)
-      !name.empty? && name.grapheme_size <= MAXIMUM_NAME_LENGTH
+      !name.empty? && name.bytesize <= MAXIMUM_NAME_BYTESIZE
     end
 
     private def respond(context, content_type, body : String | Theme::Rendering)

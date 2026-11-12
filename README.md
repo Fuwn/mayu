@@ -126,8 +126,9 @@ file.
   `updated_at` as JSON.
 - `/heart-beat` returns `alive`.
 
-Counter names must be 1 to 64 characters long. The `demo` counter always shows 1234567890 and is
-never stored. Any other path redirects to this repository.
+Counter names must be 1 to 64 bytes long as written in the URL, so `%20` counts as three bytes.
+The `demo` counter always shows 1234567890 and is never stored. Any other path redirects to this
+repository.
 
 ## Checks
 
