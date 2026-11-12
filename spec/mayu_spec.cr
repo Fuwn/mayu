@@ -50,6 +50,21 @@ describe Mayu::CounterDatabase do
   end
 end
 
+describe Mayu::PostgresCounterDatabase do
+  it "flags remote hosts reached without certificate verification" do
+    {
+      "postgres://mayu@db.example/mayu"                     => true,
+      "postgres://mayu@db.example/mayu?sslmode=require"     => true,
+      "postgres://mayu@db.example/mayu?sslmode=verify-ca"   => false,
+      "postgres://mayu@db.example/mayu?sslmode=verify-full" => false,
+      "postgres://mayu@localhost/mayu"                      => false,
+      "postgres://mayu@[::1]/mayu"                          => false,
+    }.each do |url, skips_verification|
+      Mayu::PostgresCounterDatabase.skips_certificate_verification?(URI.parse(url)).should eq(skips_verification)
+    end
+  end
+end
+
 describe Mayu::Theme do
   it "preserves glyph order, padding, and bookends" do
     rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).rendering(12, 3).to_s

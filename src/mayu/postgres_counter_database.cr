@@ -1,9 +1,12 @@
+require "log"
 require "pg"
 require "./counter_database"
 
 module Mayu
   class PostgresCounterDatabase < CounterDatabase
     POOL_SIZE           = 25
+    VERIFYING_SSL_MODES = {"verify-ca", "verify-full"}
+    LOOPBACK_HOSTNAMES  = {"localhost", "127.0.0.1", "::1"}
     SQLITE_DATETIME_NOW = "to_char(now() at time zone 'utc', 'YYYY-MM-DD HH24:MI:SS')"
 
     INCREMENT_STATEMENT = <<-SQL
@@ -26,12 +29,24 @@ module Mayu
         abort "Invalid MAYU_DATABASE_URL: expected a postgres:// URL"
       end
 
+      if skips_certificate_verification?(uri)
+        Log.warn { "MAYU_DATABASE_URL reaches #{uri.hostname} without sslmode=verify-full or verify-ca, so its certificate is not checked" }
+      end
+
       uri.query_params = uri.query_params.tap do |parameters|
         parameters["max_pool_size"] = POOL_SIZE.to_s
         parameters["max_idle_pool_size"] = POOL_SIZE.to_s
       end
 
       new(DB.open(uri))
+    end
+
+    def self.skips_certificate_verification?(uri : URI) : Bool
+      hostname = uri.hostname
+      remote_host = !(hostname.nil? || hostname.empty? || hostname.in?(LOOPBACK_HOSTNAMES))
+      verifies_certificate = uri.query_params["sslmode"]?.in?(VERIFYING_SSL_MODES)
+
+      remote_host && !verifies_certificate
     end
 
     def create_or_migrate_table : Nil

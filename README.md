@@ -74,8 +74,9 @@ example `postgres://mayu:secret@localhost:5432/mayu`. For TLS, add `?sslmode=ver
 then checks that the server's certificate names the host and comes from a certificate authority
 the system trusts. If your provider uses its own certificate authority, mount its certificate and
 set `sslrootcert` to that file, for example `?sslmode=verify-full&sslrootcert=/mayu/root.crt`.
-`sslmode=require` encrypts the connection without checking the certificate. Mayu creates its table
-on start-up, so an empty database is enough.
+`sslmode=require` encrypts the connection without checking the certificate. Mayu logs a warning at
+start-up when it connects to a remote host without `verify-ca` or `verify-full`. Mayu creates its
+table on start-up, so an empty database is enough.
 
 Mayu uses Moe-Counter's table layout. To keep existing counts, copy Moe-Counter's database file to
 `data/count.db` before starting Mayu.
