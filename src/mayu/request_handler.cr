@@ -29,7 +29,7 @@ module Mayu
         context.response.headers["Content-Security-Policy"] = HOMEPAGE_SECURITY_POLICY
 
         respond(context, "text/html; charset=utf-8", @index_html)
-      elsif segments == ["heart-beat"]
+      elsif segments.size == 1 && route == "heart-beat"
         respond(context, "text/plain; charset=utf-8", "alive")
       elsif route == "get" && counter_name
         return unless counter = record_hit_or_reject(context, counter_name)
