@@ -99,7 +99,7 @@ describe Mayu::Theme do
 
     decompressed_image = Compress::Gzip::Reader.open(IO::Memory.new(compressed_output.to_slice), &.gets_to_end)
 
-    rendering.streamed?.should be_true
+    rendering.gzip_eligible?.should be_true
     compressed_output.size.should eq(rendering.gzip_bytesize)
     decompressed_image.should eq(rendering.to_s)
   end

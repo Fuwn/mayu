@@ -3,12 +3,12 @@ require "digest/crc32"
 module Mayu
   class Theme
     struct Rendering
-      MAXIMUM_BUFFERED_BYTESIZE = 65_536
-      MAXIMUM_GLYPH_COUNT       =     22
-      BEFORE_HEIGHT             = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
-      BEFORE_WIDTH              = %(" style="image-rendering: pixelated;" version="1.1" width=")
-      BEFORE_DEFINITIONS        = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
-                                  "<title>Mayu</title><defs>"
+      MAXIMUM_UNCOMPRESSED_BYTESIZE = 65_536
+      MAXIMUM_GLYPH_COUNT           =     22
+      BEFORE_HEIGHT                 = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
+      BEFORE_WIDTH                  = %(" style="image-rendering: pixelated;" version="1.1" width=")
+      BEFORE_DEFINITIONS            = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
+                                      "<title>Mayu</title><defs>"
       BEFORE_USES                  = "</defs><g>"
       USE_CLOSING                  = %("/>)
       SVG_CLOSING                  = "</g></svg>"
@@ -56,18 +56,14 @@ module Mayu
         each_definition { |glyph| @bytesize += glyph.definition.bytesize }
       end
 
-      def streamed? : Bool
-        @bytesize > MAXIMUM_BUFFERED_BYTESIZE
+      def gzip_eligible? : Bool
+        @bytesize > MAXIMUM_UNCOMPRESSED_BYTESIZE
       end
 
       def to_s(io : IO) : Nil
         write_opening(io)
         each_definition { |glyph| io << glyph.definition }
         write_closing(io)
-      end
-
-      def to_s : String
-        String.build(@bytesize) { |svg| to_s(svg) }
       end
 
       def gzip_bytesize : Int32

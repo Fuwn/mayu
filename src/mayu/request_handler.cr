@@ -42,14 +42,14 @@ module Mayu
 
         context.response.headers["Vary"] = "Accept-Encoding"
 
-        if rendering.streamed? && accepts_gzip?(context.request)
+        if rendering.gzip_eligible? && accepts_gzip?(context.request)
           context.response.headers["Content-Encoding"] = "gzip"
           context.response.content_type = "image/svg+xml"
           context.response.content_length = rendering.gzip_bytesize
 
           rendering.write_gzip(context.response) unless context.request.method == "HEAD"
         else
-          respond(context, "image/svg+xml", rendering.streamed? ? rendering : rendering.to_s)
+          respond(context, "image/svg+xml", rendering)
         end
       elsif route == "record" && counter_name
         return unless counter = record_hit_or_reject(context, counter_name)
