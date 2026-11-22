@@ -51,7 +51,8 @@ $ shards build
 $ ./bin/mayu
 ```
 
-Building needs Crystal and the SQLite development headers. With Nix, `nix develop` provides them.
+Building needs Crystal, `pkg-config`, and the SQLite and OpenSSL development headers. With Nix,
+`nix develop` provides them.
 
 ### Docker
 
