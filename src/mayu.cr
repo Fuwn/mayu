@@ -3,9 +3,9 @@ require "./mayu/batched_log_backend"
 require "./mayu/counter_database"
 require "./mayu/embedded_themes"
 require "./mayu/homepage"
-require "./mayu/inactivity_timeout_tcp_server"
-require "./mayu/request_log_handler"
 require "./mayu/request_handler"
+require "./mayu/request_log_handler"
+require "./mayu/request_timeout_tcp_server"
 require "./mayu/theme_catalog"
 
 module Mayu
@@ -30,7 +30,7 @@ module Mayu
     # As the container's PID 1, Mayu would otherwise ignore SIGTERM, and
     # `docker stop` would wait for its timeout before killing the process.
     {Signal::TERM, Signal::INT}.each(&.trap { server.close unless server.closed? })
-    server.bind(InactivityTimeoutTCPServer.new("::", port))
+    server.bind(RequestTimeoutTCPServer.new("::", port))
     Log.info { "Listening on port #{port}" }
     server.listen
   end

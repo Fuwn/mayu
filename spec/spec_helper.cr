@@ -5,9 +5,9 @@ require "../src/mayu/batched_log_backend"
 require "../src/mayu/counter_database"
 require "../src/mayu/embedded_themes"
 require "../src/mayu/homepage"
-require "../src/mayu/inactivity_timeout_tcp_server"
-require "../src/mayu/request_log_handler"
 require "../src/mayu/request_handler"
+require "../src/mayu/request_log_handler"
+require "../src/mayu/request_timeout_tcp_server"
 require "../src/mayu/theme_catalog"
 
 DIGIT_GLYPHS = (0..9).map(&.to_s)

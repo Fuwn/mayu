@@ -1,9 +1,9 @@
 require "socket"
 
 module Mayu
-  class InactivityTimeoutTCPServer < TCPServer
-    INACTIVITY_TIMEOUT = 15.seconds
-    REQUEST_TIMEOUT    = 15.seconds
+  class RequestTimeoutTCPServer < TCPServer
+    WRITE_TIMEOUT   = 15.seconds
+    REQUEST_TIMEOUT = 15.seconds
 
     def initialize(host : String, port : Int32, @request_timeout : Time::Span = REQUEST_TIMEOUT)
       super(host, port)
@@ -18,7 +18,7 @@ module Mayu
         handle: handle, family: family, type: type, protocol: protocol, blocking: blocking,
         request_timeout: @request_timeout)
       client.sync = sync?
-      client.write_timeout = INACTIVITY_TIMEOUT
+      client.write_timeout = WRITE_TIMEOUT
       client.tcp_nodelay = true
 
       client

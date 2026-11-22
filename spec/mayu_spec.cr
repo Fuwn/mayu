@@ -204,9 +204,9 @@ describe Mayu::BatchedLogBackend do
   end
 end
 
-describe Mayu::InactivityTimeoutTCPServer do
+describe Mayu::RequestTimeoutTCPServer do
   it "disables Nagle's algorithm on accepted sockets" do
-    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0)
+    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0)
     client = TCPSocket.new("127.0.0.1", server.local_address.port)
     accepted_socket = server.accept?.not_nil!
 
@@ -218,7 +218,7 @@ describe Mayu::InactivityTimeoutTCPServer do
   end
 
   it "times out a request that trickles in past the deadline" do
-    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
+    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
     client = TCPSocket.new("127.0.0.1", server.local_address.port)
     accepted_socket = server.accept?.not_nil!
     started_at = Time.instant
@@ -241,7 +241,7 @@ describe Mayu::InactivityTimeoutTCPServer do
   end
 
   it "restarts the request deadline after each response" do
-    server = Mayu::InactivityTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
+    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
     client = TCPSocket.new("127.0.0.1", server.local_address.port)
     accepted_socket = server.accept?.not_nil!
 
