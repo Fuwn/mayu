@@ -10,7 +10,7 @@ import xml.etree.ElementTree as xml
 
 base_url = sys.argv[1].rstrip("/")
 
-for attempt in range(100):
+for _ in range(100):
     try:
         with urllib.request.urlopen(base_url + "/heart-beat", timeout=1) as response:
             assert response.read() == b"alive"
