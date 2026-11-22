@@ -28,6 +28,14 @@ docker run -d --name mayu-tls-postgres -p "127.0.0.1:$port:5432" \
       -c ssl_cert_file=/var/lib/postgresql/server.crt \
       -c ssl_key_file=/var/lib/postgresql/server.key'
 
-until docker exec mayu-tls-postgres pg_isready -U postgres -d mayu_test -h localhost >/dev/null; do
+for _ in $(seq 60); do
+  if docker exec mayu-tls-postgres pg_isready -U postgres -d mayu_test -h localhost >/dev/null; then
+    exit 0
+  fi
+
   sleep 1
 done
+
+docker logs mayu-tls-postgres >&2
+echo "PostgreSQL did not become ready within 60 seconds" >&2
+exit 1

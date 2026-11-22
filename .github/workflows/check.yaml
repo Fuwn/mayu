@@ -9,6 +9,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17-alpine
@@ -38,6 +39,7 @@ jobs:
           MAYU_TEST_TLS_DATABASE_URL: postgres://postgres@localhost:5433/mayu_test?sslrootcert=${{ runner.temp }}/tls/ca.crt
   container:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: docker build -t mayu:check .
