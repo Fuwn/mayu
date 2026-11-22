@@ -8,7 +8,6 @@ module Mayu
     include HTTP::Handler
 
     DEFAULT_PADDING          =  6
-    MAXIMUM_PADDING          = 12
     MAXIMUM_NAME_BYTESIZE    = 64
     UNCACHED                 = "max-age=0, no-cache, no-store, must-revalidate"
     DEMO_COUNTER             = Counter.new("demo", 1_234_567_890)
@@ -36,8 +35,7 @@ module Mayu
 
         query = context.request.query_params
         theme = @themes.theme_or_default(query["theme"]?)
-        requested_padding = query["padding"]?.try(&.to_i?(whitespace: false))
-        padding = requested_padding.try(&.clamp(0, MAXIMUM_PADDING)) || DEFAULT_PADDING
+        padding = query["padding"]?.try(&.to_i?(whitespace: false)) || DEFAULT_PADDING
         rendering = theme.rendering(counter.count, padding)
 
         context.response.headers["Vary"] = "Accept-Encoding"

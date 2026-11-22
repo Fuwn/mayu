@@ -4,7 +4,8 @@ module Mayu
   class Theme
     struct Rendering
       MAXIMUM_UNCOMPRESSED_BYTESIZE = 65_536
-      MAXIMUM_GLYPH_COUNT           =     22
+      MAXIMUM_PADDING               =     12
+      MAXIMUM_DIGIT_COUNT           =     19
       BEFORE_HEIGHT                 = %(<?xml version="1.0" encoding="UTF-8"?><svg height=")
       BEFORE_WIDTH                  = %(" style="image-rendering: pixelated;" version="1.1" width=")
       BEFORE_DEFINITIONS            = %(" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">) +
@@ -17,6 +18,10 @@ module Mayu
       STORED_BLOCK_HEADER_BYTESIZE = 5
       GZIP_TRAILER_BYTESIZE        = 8
 
+      {% begin %}
+        MAXIMUM_GLYPH_COUNT = {{ [MAXIMUM_PADDING, MAXIMUM_DIGIT_COUNT].sort.last + 2 }}
+      {% end %}
+
       getter bytesize : Int32
       @glyph_slots = StaticArray(UInt8, MAXIMUM_GLYPH_COUNT).new(0_u8)
       @glyph_count = 0
@@ -26,7 +31,8 @@ module Mayu
       @closing_bytesize = 0
 
       def initialize(@theme : Theme, number : Int64, padding : Int32)
-        digits = StaticArray(UInt8, 20).new(0_u8)
+        padding = padding.clamp(0, MAXIMUM_PADDING)
+        digits = StaticArray(UInt8, MAXIMUM_DIGIT_COUNT).new(0_u8)
         digit_count = 0
         remaining_number = number.to_u64
 

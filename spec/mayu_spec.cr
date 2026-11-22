@@ -126,6 +126,13 @@ describe Mayu::Theme do
       end
     end
   end
+
+  it "clamps padding to the supported range" do
+    themed = theme("known", ["_start", "_end"] + DIGIT_GLYPHS)
+
+    themed.rendering(7, -1).to_s.scan("<use ").size.should eq(3)
+    themed.rendering(7, Int32::MAX).to_s.scan("<use ").size.should eq(Mayu::Theme::Rendering::MAXIMUM_PADDING + 2)
+  end
 end
 
 describe Mayu::ThemeCatalog do
