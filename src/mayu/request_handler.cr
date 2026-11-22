@@ -9,7 +9,7 @@ module Mayu
 
     DEFAULT_PADDING          =  6
     MAXIMUM_NAME_BYTESIZE    = 64
-    UNCACHED                 = "max-age=0, no-cache, no-store, must-revalidate"
+    UNCACHED_CACHE_CONTROL   = "max-age=0, no-cache, no-store, must-revalidate"
     DEMO_COUNTER             = Counter.new("demo", 1_234_567_890)
     REPOSITORY_URL           = "https://github.com/Fuwn/mayu"
     HOMEPAGE_SECURITY_POLICY = "frame-ancestors 'none'"
@@ -33,9 +33,9 @@ module Mayu
       elsif route == "get" && counter_name
         return unless counter = record_hit_or_reject(context, counter_name)
 
-        query = context.request.query_params
-        theme = @themes.theme_or_default(query["theme"]?)
-        padding = query["padding"]?.try(&.to_i?(whitespace: false)) || DEFAULT_PADDING
+        query_parameters = context.request.query_params
+        theme = @themes.theme_or_default(query_parameters["theme"]?)
+        padding = query_parameters["padding"]?.try(&.to_i?(whitespace: false)) || DEFAULT_PADDING
         rendering = theme.rendering(counter.count, padding)
 
         context.response.headers["Vary"] = "Accept-Encoding"
@@ -66,7 +66,7 @@ module Mayu
     end
 
     private def record_hit_or_reject(context, name) : Counter?
-      context.response.headers["Cache-Control"] = UNCACHED
+      context.response.headers["Cache-Control"] = UNCACHED_CACHE_CONTROL
 
       unless context.request.method.in?("GET", "HEAD")
         context.response.headers["Allow"] = "GET, HEAD"

@@ -330,7 +330,7 @@ describe Mayu::RequestHandler do
       head_response = handle_request(database, "HEAD", "/record/@counted")
 
       rejected_responses.map(&.status_code).should eq([405, 405, 405])
-      rejected_responses.map(&.headers["Cache-Control"]?).uniq.should eq([Mayu::RequestHandler::UNCACHED])
+      rejected_responses.map(&.headers["Cache-Control"]?).uniq.should eq([Mayu::RequestHandler::UNCACHED_CACHE_CONTROL])
       head_response.status_code.should eq(200)
       remaining_names(connection).should eq(["counted"])
     end
