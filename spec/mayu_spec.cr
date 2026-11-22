@@ -142,10 +142,10 @@ describe Mayu::Theme do
 
     Dir.mkdir_p("#{themes_directory}/copied")
     Dir.mkdir_p("#{themes_directory}/.hidden")
-    File.copy("themes/asoul/0.gif", "#{themes_directory}/copied/0.gif")
-    File.copy("themes/asoul/0.gif", "#{themes_directory}/copied/1.gif")
-    File.copy("themes/asoul/2.gif", "#{themes_directory}/copied/2.gif")
-    File.copy("themes/asoul/2.gif", "#{themes_directory}/copied/notes.gif")
+    File.copy("themes/garukura/0.png", "#{themes_directory}/copied/0.png")
+    File.copy("themes/garukura/0.png", "#{themes_directory}/copied/1.png")
+    File.copy("themes/garukura/2.png", "#{themes_directory}/copied/2.png")
+    File.copy("themes/garukura/2.png", "#{themes_directory}/copied/notes.png")
 
     glyph_images = Mayu::Theme.load_glyph_images(themes_directory, "copied")
 
