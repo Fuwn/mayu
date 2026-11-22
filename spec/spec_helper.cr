@@ -1,3 +1,4 @@
+require "file_utils"
 require "log/spec"
 require "spec"
 require "../src/mayu/batched_log_backend"

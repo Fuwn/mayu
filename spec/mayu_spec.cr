@@ -48,6 +48,17 @@ describe Mayu::CounterDatabase do
       remaining_names(connection).should eq(["second"])
     end
   end
+
+  it "uses SQLite when the database URL is empty" do
+    working_directory = File.tempname("mayu-spec")
+
+    Dir.mkdir(working_directory)
+    Dir.cd(working_directory) do
+      Mayu::CounterDatabase.open("").should be_a(Mayu::SqliteCounterDatabase)
+    end
+  ensure
+    FileUtils.rm_rf(working_directory) if working_directory
+  end
 end
 
 describe Mayu::PostgresCounterDatabase do

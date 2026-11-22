@@ -18,8 +18,14 @@ module Mayu
     def initialize(@connection : DB::Database | DB::Connection, @increment_statement : String)
     end
 
+    # An empty URL counts as unset, because deployment tools often define the
+    # variable without a value.
     def self.open(url : String?) : CounterDatabase
-      url ? PostgresCounterDatabase.open(url) : SqliteCounterDatabase.open
+      if postgres_url = url.presence
+        PostgresCounterDatabase.open(postgres_url)
+      else
+        SqliteCounterDatabase.open
+      end
     end
 
     abstract def create_or_migrate_table : Nil
