@@ -3,7 +3,7 @@ require "./spec_helper"
 describe "Mayu::CounterDatabase on PostgreSQL" do
   database_url = ENV["MAYU_TEST_DATABASE_URL"]?
 
-  it "migrates, widens integers, and increments" do
+  it "migrates a legacy Moe-Counter table" do
     pending!("MAYU_TEST_DATABASE_URL is unset") unless database_url
 
     DB.connect(database_url) do |connection|
@@ -29,7 +29,7 @@ describe "Mayu::CounterDatabase on PostgreSQL" do
 
         counter.count.should eq(42)
         counter.created_at.should be_nil
-        counter.updated_at.should_not be_nil
+        counter.updated_at.should match(SQLITE_DATETIME_PATTERN)
         next_counter.count.should eq(43)
         connection.exec "update tb_count set num = 2147483647 where name = 'legacy'"
 

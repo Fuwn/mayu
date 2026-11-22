@@ -18,7 +18,7 @@ describe Mayu::CounterDatabase do
 
       counter.count.should eq(42)
       counter.created_at.should be_nil
-      counter.updated_at.should_not be_nil
+      counter.updated_at.should match(SQLITE_DATETIME_PATTERN)
       index_count.should eq(2)
     end
   end
@@ -32,12 +32,15 @@ describe Mayu::CounterDatabase do
         "select name from pragma_index_info('sqlite_autoindex_tb_count_1');", as: String)
 
       connection.exec "insert into tb_count (id, name) values (128, 'first');"
+
       expect_raises(SQLite3::Exception) do
         connection.exec "insert into tb_count (id, name) values (128, 'duplicate-id');"
       end
+
       expect_raises(SQLite3::Exception) do
         connection.exec "insert into tb_count (name) values ('first');"
       end
+
       connection.exec "delete from tb_count where name = 'first';"
       connection.exec "insert into tb_count (name) values ('second');"
 
@@ -78,7 +81,7 @@ end
 
 describe Mayu::Theme do
   it "preserves glyph order, padding, and bookends" do
-    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).rendering(12, 3).to_s
+    rendered_image = stub_theme("known", Mayu::Theme::GLYPH_NAMES).rendering(12, 3).to_s
 
     rendered_image.should contain(
       %(<g><use xlink:href="#_start" x="0"/><use xlink:href="#0" x="10"/>) \
@@ -86,7 +89,7 @@ describe Mayu::Theme do
   end
 
   it "defines each repeated glyph once" do
-    rendered_image = theme("known", ["_start", "_end"] + DIGIT_GLYPHS).rendering(1100, 0).to_s
+    rendered_image = stub_theme("known", Mayu::Theme::GLYPH_NAMES).rendering(1100, 0).to_s
 
     rendered_image.should contain(
       %(<defs><image id="_start"/><image id="1"/><image id="0"/><image id="_end"/></defs>))
@@ -116,11 +119,11 @@ describe Mayu::Theme do
   end
 
   it "declares the exact size of every rendering" do
-    themed = theme("known", ["_start", "_end"] + DIGIT_GLYPHS)
+    complete_theme = stub_theme("known", Mayu::Theme::GLYPH_NAMES)
 
     {0_i64, 7_i64, 1100_i64, 1_234_567_890_i64, Int64::MAX}.each do |number|
       {0, 6, 12}.each do |padding|
-        rendering = themed.rendering(number, padding)
+        rendering = complete_theme.rendering(number, padding)
 
         rendering.bytesize.should eq(rendering.to_s.bytesize)
       end
@@ -128,16 +131,36 @@ describe Mayu::Theme do
   end
 
   it "clamps padding to the supported range" do
-    themed = theme("known", ["_start", "_end"] + DIGIT_GLYPHS)
+    complete_theme = stub_theme("known", Mayu::Theme::GLYPH_NAMES)
 
-    themed.rendering(7, -1).to_s.scan("<use ").size.should eq(3)
-    themed.rendering(7, Int32::MAX).to_s.scan("<use ").size.should eq(Mayu::Theme::Rendering::MAXIMUM_PADDING + 2)
+    complete_theme.rendering(7, -1).to_s.scan("<use ").size.should eq(3)
+    complete_theme.rendering(7, Int32::MAX).to_s.scan("<use ").size.should eq(Mayu::Theme::Rendering::MAXIMUM_PADDING + 2)
+  end
+
+  it "loads glyphs with content-hash IDs and skips hidden entries" do
+    themes_directory = File.tempname("mayu-themes")
+
+    Dir.mkdir_p("#{themes_directory}/copied")
+    Dir.mkdir_p("#{themes_directory}/.hidden")
+    File.copy("themes/asoul/0.gif", "#{themes_directory}/copied/0.gif")
+    File.copy("themes/asoul/0.gif", "#{themes_directory}/copied/1.gif")
+    File.copy("themes/asoul/2.gif", "#{themes_directory}/copied/2.gif")
+    File.copy("themes/asoul/2.gif", "#{themes_directory}/copied/notes.gif")
+
+    glyph_images = Mayu::Theme.load_glyph_images(themes_directory, "copied")
+
+    Mayu::Theme.directory_entries(themes_directory).should eq(["copied"])
+    glyph_images.keys.sort.should eq(["0", "1", "2"])
+    glyph_images["0"].id.should eq(glyph_images["1"].id)
+    glyph_images["0"].id.should_not eq(glyph_images["2"].id)
+  ensure
+    FileUtils.rm_rf(themes_directory) if themes_directory
   end
 end
 
 describe Mayu::ThemeCatalog do
   it "falls back to the default theme" do
-    themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS)])
+    themes = Mayu::ThemeCatalog.new([stub_theme("known", Mayu::Theme::DIGIT_NAMES)])
     rendered_image = themes.theme_or_default("does-not-exist").rendering(7, 3).to_s
 
     rendered_image.should contain(%(width="30"))
@@ -163,7 +186,7 @@ describe Mayu::ThemeCatalog do
   end
 
   it "prefers a loaded theme over the preferred name" do
-    Mayu::ThemeCatalog.new([theme("gelbooru-h", DIGIT_GLYPHS)]).default_name.should eq("gelbooru-h")
+    Mayu::ThemeCatalog.new([stub_theme("gelbooru-h", Mayu::Theme::DIGIT_NAMES)]).default_name.should eq("gelbooru-h")
   end
 end
 
@@ -313,9 +336,11 @@ describe Mayu::RequestHandler do
   it "rejects invalid names without creating rows" do
     with_sqlite do |connection, database|
       database.create_or_migrate_table
+
       ["", "a" * 65].each do |name|
         handle_request(database, "GET", "/record/@#{name}").status_code.should eq(400)
       end
+
       remaining_names(connection).should be_empty
     end
   end
@@ -331,8 +356,48 @@ describe Mayu::RequestHandler do
 
       rejected_responses.map(&.status_code).should eq([405, 405, 405])
       rejected_responses.map(&.headers["Cache-Control"]?).uniq.should eq([Mayu::RequestHandler::UNCACHED_CACHE_CONTROL])
+      rejected_responses.map(&.headers["Allow"]?).uniq.should eq(["GET, HEAD"])
+      rejected_responses.map(&.body).uniq.should eq([""])
       head_response.status_code.should eq(200)
       remaining_names(connection).should eq(["counted"])
+    end
+  end
+
+  it "declares the same size for HEAD as for GET" do
+    with_sqlite do |_, database|
+      database.create_or_migrate_table
+
+      accepting = HTTP::Headers{"Accept-Encoding" => "gzip"}
+
+      {"/get/@sized", "/get/@sized?theme=large&padding=12"}.each do |resource|
+        get_response = handle_request(database, "GET", resource, accepting)
+        head_response = handle_request(database, "HEAD", resource, accepting)
+
+        head_response.headers["Content-Encoding"]?.should eq(get_response.headers["Content-Encoding"]?)
+        head_response.headers["Content-Length"].should eq(get_response.body.bytesize.to_s)
+      end
+    end
+  end
+
+  it "ignores empty path segments" do
+    with_sqlite do |connection, database|
+      database.create_or_migrate_table
+
+      handle_request(database, "GET", "//record//@segments").status_code.should eq(200)
+      remaining_names(connection).should eq(["segments"])
+    end
+  end
+
+  it "redirects unknown routes to the repository with an empty body" do
+    with_sqlite do |connection, database|
+      database.create_or_migrate_table
+
+      redirect_response = handle_request(database, "GET", "/unknown/@name")
+
+      redirect_response.status_code.should eq(303)
+      redirect_response.headers["Location"].should eq(Mayu::RequestHandler::REPOSITORY_URL)
+      redirect_response.body.should be_empty
+      remaining_names(connection).should be_empty
     end
   end
 
@@ -359,7 +424,7 @@ end
 
 describe Mayu::Homepage do
   it "fills every placeholder in the homepage template" do
-    themes = Mayu::ThemeCatalog.new([theme("asoul", DIGIT_GLYPHS), theme("other-theme", DIGIT_GLYPHS)])
+    themes = Mayu::ThemeCatalog.new([stub_theme("asoul", Mayu::Theme::DIGIT_NAMES), stub_theme("other-theme", Mayu::Theme::DIGIT_NAMES)])
     homepage = Mayu::Homepage.render(File.read("index.html"), "1.2.3", themes)
 
     homepage.should_not contain("{{")

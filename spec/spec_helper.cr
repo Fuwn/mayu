@@ -10,7 +10,7 @@ require "../src/mayu/request_log_handler"
 require "../src/mayu/request_timeout_tcp_server"
 require "../src/mayu/theme_catalog"
 
-DIGIT_GLYPHS = (0..9).map(&.to_s)
+SQLITE_DATETIME_PATTERN = /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\z/
 
 def with_sqlite(& : DB::Connection, Mayu::CounterDatabase ->)
   DB.connect("sqlite3://%3Amemory%3A") do |connection|
@@ -22,7 +22,7 @@ def remaining_names(connection) : Array(String)
   connection.query_all("select name from tb_count order by name;", as: String)
 end
 
-def theme(theme_name, glyph_names) : Mayu::Theme
+def stub_theme(theme_name, glyph_names) : Mayu::Theme
   glyph_images = glyph_names.to_h do |glyph_name|
     {glyph_name, Mayu::GlyphImage.new(
       id: glyph_name,
@@ -36,7 +36,7 @@ def theme(theme_name, glyph_names) : Mayu::Theme
 end
 
 def large_theme(theme_name) : Mayu::Theme
-  glyph_images = (["_start", "_end"] + DIGIT_GLYPHS).to_h do |glyph_name|
+  glyph_images = Mayu::Theme::GLYPH_NAMES.to_h do |glyph_name|
     definition = %(<image id="#{glyph_name}" data="#{glyph_name * 9000}"/>)
 
     {glyph_name, Mayu::GlyphImage.new(id: glyph_name, definition: definition, width: 10, height: 20)}
@@ -46,7 +46,7 @@ def large_theme(theme_name) : Mayu::Theme
 end
 
 def handle_request(database, method, resource, headers = HTTP::Headers.new,
-                   themes = Mayu::ThemeCatalog.new([theme("known", DIGIT_GLYPHS), large_theme("large")])) : HTTP::Client::Response
+                   themes = Mayu::ThemeCatalog.new([stub_theme("known", Mayu::Theme::DIGIT_NAMES), large_theme("large")])) : HTTP::Client::Response
   output = IO::Memory.new
   request = HTTP::Request.new(method, resource, headers)
   response = HTTP::Server::Response.new(output)
