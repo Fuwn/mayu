@@ -2,7 +2,7 @@ require "./spec_helper"
 
 describe Mayu::CounterDatabase do
   it "migrates a legacy Moe-Counter table" do
-    with_sqlite do |connection, database|
+    with_sqlite(create_table: false) do |connection, database|
       connection.exec <<-SQL
         create table tb_count (
           id integer primary key autoincrement not null unique,
@@ -24,7 +24,7 @@ describe Mayu::CounterDatabase do
   end
 
   it "preserves SQLite identity and name constraints" do
-    with_sqlite do |connection, database|
+    with_sqlite(create_table: false) do |connection, database|
       database.create_or_migrate_table
       database.create_or_migrate_table
 
@@ -111,7 +111,7 @@ describe Mayu::Theme do
 
     rendering.write_gzip(compressed_output)
 
-    decompressed_image = Compress::Gzip::Reader.open(IO::Memory.new(compressed_output.to_slice), &.gets_to_end)
+    decompressed_image = gunzip(compressed_output.to_slice)
 
     rendering.gzip_eligible?.should be_true
     compressed_output.size.should eq(rendering.gzip_bytesize)
@@ -229,57 +229,40 @@ end
 
 describe Mayu::RequestTimeoutTCPServer do
   it "disables Nagle's algorithm on accepted sockets" do
-    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0)
-    client = TCPSocket.new("127.0.0.1", server.local_address.port)
-    accepted_socket = server.accept?.not_nil!
-
-    accepted_socket.tcp_nodelay?.should be_true
-  ensure
-    accepted_socket.try(&.close)
-    client.try(&.close)
-    server.try(&.close)
+    with_accepted_socket do |_, accepted_socket|
+      accepted_socket.tcp_nodelay?.should be_true
+    end
   end
 
   it "times out a request that trickles in past the deadline" do
-    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
-    client = TCPSocket.new("127.0.0.1", server.local_address.port)
-    accepted_socket = server.accept?.not_nil!
-    started_at = Time.instant
+    with_accepted_socket(300.milliseconds) do |client, accepted_socket|
+      started_at = Time.instant
 
-    spawn do
-      10.times do
-        client.print "G"
-        client.flush
-        sleep 100.milliseconds
+      spawn do
+        10.times do
+          client.print "G"
+          client.flush
+          sleep 100.milliseconds
+        end
+      rescue IO::Error
       end
-    rescue IO::Error
-    end
 
-    expect_raises(IO::TimeoutError) { accepted_socket.gets }
-    (Time.instant - started_at).should be < 900.milliseconds
-  ensure
-    accepted_socket.try(&.close)
-    client.try(&.close)
-    server.try(&.close)
+      expect_raises(IO::TimeoutError) { accepted_socket.gets }
+      (Time.instant - started_at).should be < 900.milliseconds
+    end
   end
 
   it "restarts the request deadline after each response" do
-    server = Mayu::RequestTimeoutTCPServer.new("127.0.0.1", 0, request_timeout: 300.milliseconds)
-    client = TCPSocket.new("127.0.0.1", server.local_address.port)
-    accepted_socket = server.accept?.not_nil!
-
-    sleep 200.milliseconds
-    client.puts "first"
-    accepted_socket.gets.should eq("first")
-    accepted_socket.puts "response"
-    accepted_socket.flush
-    sleep 200.milliseconds
-    client.puts "second"
-    accepted_socket.gets.should eq("second")
-  ensure
-    accepted_socket.try(&.close)
-    client.try(&.close)
-    server.try(&.close)
+    with_accepted_socket(300.milliseconds) do |client, accepted_socket|
+      sleep 200.milliseconds
+      client.puts "first"
+      accepted_socket.gets.should eq("first")
+      accepted_socket.puts "response"
+      accepted_socket.flush
+      sleep 200.milliseconds
+      client.puts "second"
+      accepted_socket.gets.should eq("second")
+    end
   end
 end
 
@@ -300,8 +283,6 @@ end
 describe Mayu::RequestHandler do
   it "counts hits and preserves encoded names" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       image_response = handle_request(database, "GET", "/get/@has%20space?padding=999")
       record_response = handle_request(database, "GET", "/record/@has%20space")
 
@@ -316,8 +297,6 @@ describe Mayu::RequestHandler do
 
   it "serves large images as gzip only to clients that accept it" do
     with_sqlite do |_, database|
-      database.create_or_migrate_table
-
       accepting = HTTP::Headers{"Accept-Encoding" => "br, gzip"}
       refusing = HTTP::Headers{"Accept-Encoding" => "gzip;q=0, br"}
       compressed_response = handle_request(database, "GET", "/get/@large?theme=large&padding=12", accepting)
@@ -326,7 +305,7 @@ describe Mayu::RequestHandler do
 
       compressed_response.headers["Content-Encoding"].should eq("gzip")
       compressed_response.headers["Vary"].should eq("Accept-Encoding")
-      Compress::Gzip::Reader.open(IO::Memory.new(compressed_response.body), &.gets_to_end).should contain("</svg>")
+      gunzip(compressed_response.body).should contain("</svg>")
       refused_response.headers["Content-Encoding"]?.should be_nil
       refused_response.body.should end_with("</svg>")
       small_response.headers["Content-Encoding"]?.should be_nil
@@ -335,8 +314,6 @@ describe Mayu::RequestHandler do
 
   it "rejects invalid names without creating rows" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       ["", "a" * 65].each do |name|
         handle_request(database, "GET", "/record/@#{name}").status_code.should eq(400)
       end
@@ -347,8 +324,6 @@ describe Mayu::RequestHandler do
 
   it "counts HEAD and rejects other methods" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       rejected_responses = ["POST", "PUT", "DELETE"].map do |method|
         handle_request(database, method, "/record/@methods")
       end
@@ -365,8 +340,6 @@ describe Mayu::RequestHandler do
 
   it "declares the same size for HEAD as for GET" do
     with_sqlite do |_, database|
-      database.create_or_migrate_table
-
       accepting = HTTP::Headers{"Accept-Encoding" => "gzip"}
 
       {"/get/@sized", "/get/@sized?theme=large&padding=12"}.each do |resource|
@@ -381,8 +354,6 @@ describe Mayu::RequestHandler do
 
   it "ignores empty path segments" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       handle_request(database, "GET", "//record//@segments").status_code.should eq(200)
       remaining_names(connection).should eq(["segments"])
     end
@@ -390,8 +361,6 @@ describe Mayu::RequestHandler do
 
   it "redirects unknown routes to the repository with an empty body" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       redirect_response = handle_request(database, "GET", "/unknown/@name")
 
       redirect_response.status_code.should eq(303)
@@ -412,8 +381,6 @@ describe Mayu::RequestHandler do
 
   it "never creates a database row for demo" do
     with_sqlite do |connection, database|
-      database.create_or_migrate_table
-
       record_response = handle_request(database, "GET", "/record/@demo")
 
       JSON.parse(record_response.body)["num"].should eq(1_234_567_890)
@@ -446,8 +413,6 @@ describe "Mayu::EMBEDDED_THEMES" do
     themes = Mayu::ThemeCatalog.load(Mayu::EMBEDDED_THEMES, "")
 
     with_sqlite do |_, database|
-      database.create_or_migrate_table
-
       accepting = HTTP::Headers{"Accept-Encoding" => "gzip"}
       default_response = handle_request(database, "GET", "/get/@embedded", themes: themes)
       large_response = handle_request(database, "GET", "/get/@embedded?theme=lain&padding=12", accepting, themes)
@@ -455,7 +420,7 @@ describe "Mayu::EMBEDDED_THEMES" do
       default_response.headers["Content-Type"].should eq("image/svg+xml")
       default_response.body.should contain("<image")
       large_response.headers["Content-Encoding"].should eq("gzip")
-      Compress::Gzip::Reader.open(IO::Memory.new(large_response.body), &.gets_to_end).should contain("<image")
+      gunzip(large_response.body).should contain("<image")
     end
   end
 end
