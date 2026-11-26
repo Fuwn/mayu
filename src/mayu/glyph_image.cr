@@ -74,12 +74,7 @@ module Mayu
       definition = %(<image id="#{image_id}" height="#{header.height}" width="#{header.width}" ) \
                    %(xlink:href="#{data_url}"/>)
 
-      new(
-        id: image_id,
-        definition: definition,
-        width: header.width,
-        height: header.height,
-      )
+      new(id: image_id, definition: definition, width: header.width, height: header.height)
     end
   end
 end
