@@ -409,6 +409,14 @@ describe "Mayu::EMBEDDED_THEMES" do
     end
   end
 
+  it "embeds every glyph exactly as it loads from the themes directory" do
+    Mayu::EMBEDDED_THEMES.each do |theme_name, embedded_glyph_images|
+      matches_fresh_load = embedded_glyph_images == Mayu::Theme.load_glyph_images("themes", theme_name)
+
+      matches_fresh_load.should be_true, "The embedded #{theme_name} theme differs from themes/#{theme_name}"
+    end
+  end
+
   it "renders the default theme and serves large themes as gzip" do
     themes = Mayu::ThemeCatalog.load(Mayu::EMBEDDED_THEMES, "")
 
